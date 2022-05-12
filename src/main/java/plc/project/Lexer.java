@@ -73,8 +73,13 @@ public final class Lexer {
      * which should be a regex. For example, {@code peek("a", "b", "c")} would
      * return true if the next characters are {@code 'a', 'b', 'c'}.
      */
-    public boolean peek(String... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+    public boolean peek(String ... patterns) {
+        for (int i = 0; i < patterns.length; i++) {
+            if (!chars.has(i) || !String.valueOf(chars.get(i)).matches(patterns[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -82,8 +87,14 @@ public final class Lexer {
      * advances the character stream past all matched characters if peek returns
      * true. Hint - it's easiest to have this method simply call peek.
      */
-    public boolean match(String... patterns) {
-        throw new UnsupportedOperationException(); //TODO (in lecture)
+    public boolean match(String ... patterns) {
+        boolean peek = peek(patterns);
+        if (peek) {
+            for (int i = 0; i < patterns.length; i++) {
+                chars.advance();
+            }
+        }
+        return peek;
     }
 
     /**
