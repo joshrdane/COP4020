@@ -4,18 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="56442856-5b47-4ebc-8206-2f15fe8a2112" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.jar" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradlew" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gradlew.bat" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
+    <list default="true" id="56442856-5b47-4ebc-8206-2f15fe8a2112" name="Changes" comment="Initial commit">
+      <change afterPath="$PROJECT_DIR$/src/main/java/plc/homework/Regex.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/plc/project/Lexer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/plc/project/ParseException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/plc/project/Token.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/plc/homework/RegexTests.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/plc/project/LexerTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/plc/examples/AccountTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/plc/examples/AccountTests.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,12 +44,111 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "C:/Users/DaneJ1/IdeaProjects/COP4020",
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.5632184",
     "settings.editor.selected.configurable": "advanced.settings"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\DaneJ1\IdeaProjects\COP4020\src\main\java\plc\homework" />
+      <recent name="C:\Users\DaneJ1\IdeaProjects\COP4020\src\test\java\plc\homework" />
+      <recent name="C:\Users\DaneJ1\IdeaProjects\COP4020\src\test\java\plc\project" />
+      <recent name="C:\Users\DaneJ1\IdeaProjects\COP4020\src\main\java\plc\project" />
+    </key>
+  </component>
+  <component name="RunManager" selected="JUnit.RegexTests.testIntegerListRegex">
+    <configuration name="AccountTests" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="COP4020.test" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="plc.examples.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="plc.examples" />
+      <option name="MAIN_CLASS_NAME" value="plc.examples.AccountTests" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="RegexTests.testEmailRegex" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="COP4020.test" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="plc.homework.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="plc.homework" />
+      <option name="MAIN_CLASS_NAME" value="plc.homework.RegexTests" />
+      <option name="METHOD_NAME" value="testEmailRegex(java.lang.String,java.lang.String,boolean)" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="RegexTests.testEvenStringsRegex" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="COP4020.test" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="plc.homework.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="plc.homework" />
+      <option name="MAIN_CLASS_NAME" value="plc.homework.RegexTests" />
+      <option name="METHOD_NAME" value="testEvenStringsRegex(java.lang.String,java.lang.String,boolean)" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="RegexTests.testIntegerListRegex" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="COP4020.test" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="plc.homework.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="plc.homework" />
+      <option name="MAIN_CLASS_NAME" value="plc.homework.RegexTests" />
+      <option name="METHOD_NAME" value="testIntegerListRegex(java.lang.String,java.lang.String,boolean)" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="RegexTests.testNumberRegex" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="COP4020.test" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="plc.homework.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="plc.homework" />
+      <option name="MAIN_CLASS_NAME" value="plc.homework.RegexTests" />
+      <option name="METHOD_NAME" value="testNumberRegex(java.lang.String,java.lang.String,boolean)" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.RegexTests.testIntegerListRegex" />
+        <item itemvalue="JUnit.RegexTests.testEvenStringsRegex" />
+        <item itemvalue="JUnit.RegexTests.testEmailRegex" />
+        <item itemvalue="JUnit.RegexTests.testNumberRegex" />
+        <item itemvalue="JUnit.AccountTests" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -62,8 +158,17 @@
       <option name="presentableId" value="Default" />
       <updated>1652101783106</updated>
       <workItem from="1652101787283" duration="2806000" />
-      <workItem from="1652104830746" duration="46000" />
+      <workItem from="1652104830746" duration="4136000" />
+      <workItem from="1652358004254" duration="7488000" />
     </task>
+    <task id="LOCAL-00001" summary="Initial commit">
+      <created>1652105006935</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1652105006935</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -79,5 +184,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Initial commit" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial commit" />
   </component>
 </project>
