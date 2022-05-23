@@ -32,7 +32,7 @@ public class RegexTests {
      */
     @ParameterizedTest
     @MethodSource
-    public void testURLRegex(String test, String input, boolean success) {
+    public void testEmailRegex(String test, String input, boolean success) {
         test(input, Regex.EMAIL, success);
     }
 
@@ -73,9 +73,8 @@ public class RegexTests {
                 Arguments.of("14 Characters", "i<3pancakes10!", true),
                 Arguments.of("6 Characters", "6chars", false),
                 Arguments.of("13 Characters", "i<3pancakes9!", false),
-                // My test cases
-                Arguments.of("8 characters", "a2c4e6g8", false),
-                Arguments.of("9 characters", "a2c4e6g8i", false),
+                Arguments.of("8 Characters", "a2c4e6g8", false),
+                Arguments.of("9 Characters", "a2c4e6g8i", false),
                 Arguments.of("10 Characters", "0123456789", true),
                 Arguments.of("11 Characters", "0123456789A", false),
                 Arguments.of("12 Characters", "0123456789AB", true),
@@ -97,7 +96,8 @@ public class RegexTests {
         return Stream.of(
                 Arguments.of("No Elements", "[]", true),
                 Arguments.of("Single Element", "[1]", true),
-                Arguments.of("Multiple Elements", "[1,2,3]", true),
+                Arguments.of("Multiple Elements no spacing", "[1,2,3]", true),
+                Arguments.of("Multiple Elements with spacing", "[1, 2, 3]", true),
                 Arguments.of("Multiple Elements mixed spacing", "[1,2, 3]", true),
                 Arguments.of("Trailing Comma", "[1,2,3,]", false),
                 Arguments.of("Missing Brackets", "1,2,3", false),
@@ -122,6 +122,7 @@ public class RegexTests {
                 Arguments.of("Multiple digit with decimal", "123.456", true),
                 Arguments.of("Negative decimal with trailing zero", "-1.0", true),
                 Arguments.of("Positive single digit", "+1", true),
+                Arguments.of("Positive multiple digit with decimal", "+123.456", true),
                 Arguments.of("Positive single digit with trailing decimal", "+1.", false),
                 Arguments.of("Single digit with trailing radix", "1.", false),
                 Arguments.of("Single digit with leading radix", ".5", false),
@@ -133,11 +134,25 @@ public class RegexTests {
     @ParameterizedTest
     @MethodSource
     public void testStringRegex(String test, String input, boolean success) {
-        throw new UnsupportedOperationException(); //TODO
+        test(input, Regex.STRING, success);
     }
 
     public static Stream<Arguments> testStringRegex() {
-        throw new UnsupportedOperationException(); //TODO
+        return Stream.of(
+                Arguments.of("Empty", "\"\"", true),
+                Arguments.of("Alphabetic", "\"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\"", true),
+                Arguments.of("Numeric", "\"0123456789\"", true),
+                Arguments.of("Symbolic", "\"!@#$%^&*()-=[]\\\\{}|;:'<>?/\"", true),
+                Arguments.of("Alphanumeric", "\"a1b2c3\"", true),
+                Arguments.of("Alphanumeric and symbolic", "\"a1b2c3???\"", true),
+                Arguments.of("Newline Escape", "\"Hello,\\nWorld\"", true),
+                Arguments.of("Unterminated", "\"unterminated", false),
+                Arguments.of("Single quote", "\"", false),
+                Arguments.of("Missing beginning quote", "abc\"", false),
+                Arguments.of("Invalid Escape", "\"invalid\\escape\"", false),
+                Arguments.of("Escaped quotation resulting in unterminated string", "\"\\\"", false),
+                Arguments.of("Escaped quotation", "\"\\\"\"", true)
+        );
     }
 
     /**

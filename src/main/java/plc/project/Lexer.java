@@ -31,8 +31,10 @@ public final class Lexer {
      */
     public List<Token> lex() {
         ArrayList<Token> tokens = new ArrayList<>();
-        while (chars.has(1)) {
-            while (match("\\s")); // advance past whitespace
+        while (chars.has(0)) {
+            while (match("\\s")) {
+                chars.skip(); // advance past whitespace
+            }
             tokens.add(lexToken()); // lex next token
         }
         return tokens;
@@ -47,31 +49,94 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        throw new UnsupportedOperationException(); //TODO
+        if (peek("[A-Za-z]")) {
+            return lexIdentifier();
+        } else if (peek("[0-9]")
+                || peek("[+|\\-]", "[0-9]")) {
+            return lexNumber();
+        } else if (peek("'")) {
+            return lexCharacter();
+        } else if (peek("\"")) {
+            return lexString();
+        } else {
+            return lexOperator();
+        }
     }
 
     public Token lexIdentifier() {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("[A-Za-z]")) {
+            while (match("[A-Za-z0-9_-]"));
+            return chars.emit(Token.Type.IDENTIFIER);
+        }
+        throw new ParseException("Unexpected character: ", chars.index + 1);
     }
 
     public Token lexNumber() {
-        throw new UnsupportedOperationException(); //TODO
+        match("[+|\\-]");
+        Token.Type type = Token.Type.INTEGER;
+        while (match("\\d")) {
+            if (match("\\.")) {
+                if (type == Token.Type.DECIMAL) {
+                    throw new ParseException("Multiple decimal points encountered", chars.index);
+                }
+                if (!match("\\d")) {
+                    throw new ParseException("Expected digit following decimal point", chars.index + 1);
+                }
+                type = Token.Type.DECIMAL;
+            }
+        }
+        return chars.emit(type);
     }
 
     public Token lexCharacter() {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("'")) {
+            if (match("\\\\", "[bnrt'\"\\\\]") || match(".")) {
+                if (match("'")) {
+                    return chars.emit(Token.Type.CHARACTER);
+                } else {
+                    throw new ParseException("Missing: '", chars.index + 1);
+                }
+            }
+        }
+        throw new ParseException("Unexpected character: ", chars.index + 1);
     }
 
     public Token lexString() {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("\"")) {
+            while (!match("\"")) {
+                if (!chars.has(1)) {
+                    throw new ParseException("Unterminated String: ", chars.index + 1);
+                }
+                /*
+                // Begin escape sequence
+                if (match("\\\\")) {
+                    if (!match("[bnrt'\"\\\\]")) {
+                        throw new ParseException("Unexpected character: ", chars.index + 1);
+                    }
+                }
+                // End escape sequence
+                 */
+                lexEscape();
+                chars.advance();
+            }
+            return chars.emit(Token.Type.STRING);
+        }
+        throw new ParseException("Unexpected character: ", chars.index + 1);
     }
 
     public void lexEscape() {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("\\\\")) {
+            if (!match("[bnrt'\"\\\\]")) {
+                throw new ParseException("Unexpected character: ", chars.index + 1);
+            }
+        }
     }
 
     public Token lexOperator() {
-        throw new UnsupportedOperationException(); //TODO
+        if (!match("[<>!=]", "=")) {
+            match("\\S");
+        }
+        return chars.emit(Token.Type.OPERATOR);
     }
 
     /**
@@ -144,6 +209,11 @@ public final class Lexer {
             return new Token(type, input.substring(start, index), start);
         }
 
+    }
+
+    public static void main(String[] args) {
+        Lexer lex = new Lexer("12.34.56");
+        lex.lex();
     }
 
 }
