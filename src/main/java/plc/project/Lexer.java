@@ -90,7 +90,14 @@ public final class Lexer {
 
     public Token lexCharacter() {
         if (match("'")) {
-            if (match("\\\\", "[bnrt'\"\\\\]") || match(".")) {
+            if (peek("\\\\")) {
+                lexEscape();
+                if (match("'")) {
+                    return chars.emit(Token.Type.CHARACTER);
+                } else {
+                    throw new ParseException("Missing: '", chars.index + 1);
+                }
+            } else if (match("[^'\nr]")) {
                 if (match("'")) {
                     return chars.emit(Token.Type.CHARACTER);
                 } else {
