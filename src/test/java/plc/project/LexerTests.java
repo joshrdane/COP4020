@@ -71,10 +71,13 @@ public class LexerTests {
 
     private static Stream<Arguments> testCharacter() {
         return Stream.of(
-                Arguments.of("Alphabetic", "'c'", true),
-                Arguments.of("Newline Escape", "'\\n'", true),
+                Arguments.of("Single Alphabetic", "'a'", true),
+                Arguments.of("Escaped Newline", "'\\n'", true),
+                Arguments.of("Escaped Backslash", "'\\\\'", true),
+                Arguments.of("Escaped Single Quote", "'\\''", true),
+                Arguments.of("Unescaped Newline", "'\n'", false),
                 Arguments.of("Empty", "''", false),
-                Arguments.of("Multiple", "'abc'", false)
+                Arguments.of("Multiple Alphabetic", "'abc'", false)
         );
     }
 
@@ -88,7 +91,9 @@ public class LexerTests {
         return Stream.of(
                 Arguments.of("Empty", "\"\"", true),
                 Arguments.of("Alphabetic", "\"abc\"", true),
-                Arguments.of("Newline Escape", "\"Hello,\\nWorld\"", true),
+                Arguments.of("Symbolic", "\"#$\"", true),
+                Arguments.of("Escaped Newline", "\"Hello,\\nWorld\"", true),
+                Arguments.of("Unescaped Newline", "\"Hello,\nWorld\"", false),
                 Arguments.of("Unterminated", "\"unterminated", false),
                 Arguments.of("Invalid Escape", "\"invalid\\escape\"", false)
         );
