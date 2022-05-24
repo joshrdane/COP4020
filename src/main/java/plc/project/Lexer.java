@@ -49,7 +49,7 @@ public final class Lexer {
      * by {@link #lex()}
      */
     public Token lexToken() {
-        if (peek("[A-Za-z]")) {
+        if (peek("[A-Za-z_]")) {
             return lexIdentifier();
         } else if (peek("[0-9]")
                 || peek("[+|\\-]", "[0-9]")) {
@@ -64,7 +64,7 @@ public final class Lexer {
     }
 
     public Token lexIdentifier() {
-        if (match("[A-Za-z]")) {
+        if (match("[A-Za-z_]")) {
             while (match("[A-Za-z0-9_-]"));
             return chars.emit(Token.Type.IDENTIFIER);
         }
