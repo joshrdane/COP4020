@@ -1,6 +1,10 @@
 package plc.project;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The parser takes the sequence of tokens emitted by the lexer and turns that
@@ -52,7 +56,14 @@ public final class Parser {
      * statement, then it is an expression/assignment statement.
      */
     public Ast.Stmt parseStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Stmt result;
+        Ast.Expr left = parseExpression();
+        if (match("=")) {
+            result = new Ast.Stmt.Assignment(left, parseExpression());
+        } else {
+            result = new Ast.Stmt.Expression(left);
+        }
+        return result;
     }
 
     /**
@@ -104,14 +115,32 @@ public final class Parser {
      * Parses the {@code expression} rule.
      */
     public Ast.Expr parseExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        return parseLogicalExpression();
     }
 
     /**
      * Parses the {@code logical-expression} rule.
      */
     public Ast.Expr parseLogicalExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expr result = parseComparisonExpression();
+        while (peek("AND|OR")) {
+            if (match("AND")) {
+                result = new Ast.Expr.Binary("&&", result, parseComparisonExpression());
+            } else if (match("OR")) {
+                result = new Ast.Expr.Binary("||", result, parseComparisonExpression());
+            }
+        }
+        return result;
+    }
+
+    public Ast.Expr parseComparisonExpression() throws ParseException {
+        Ast.Expr result;
+        Ast.Expr left = parseAdditiveExpression();
+        if (peek(Token.Type.OPERATOR)) {
+
+        }
+        throw new RuntimeException();//todo
+        //return result;
     }
 
     /**
@@ -149,7 +178,44 @@ public final class Parser {
      * not strictly necessary.
      */
     public Ast.Expr parsePrimaryExpression() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Expr result;
+        if (match("NIL")) {
+            result = new Ast.Expr.Literal(null);
+        } else if (match("TRUE")) {
+            result = new Ast.Expr.Literal(true);
+        } else if (match("FALSE")) {
+            result = new Ast.Expr.Literal(false);
+        } else if (match(Token.Type.INTEGER)) {
+            result = new Ast.Expr.Literal(new BigInteger(tokens.get(-1).getLiteral()));
+        } else if (match(Token.Type.DECIMAL)) {
+            result = new Ast.Expr.Literal(new BigDecimal(tokens.get(-1).getLiteral()));
+        } else if (match(Token.Type.CHARACTER) || match(Token.Type.STRING)) {
+            result = new Ast.Expr.Literal(stripUnescape(tokens.get(-1).getLiteral())); // this seems sketch
+        } else if (match("\\(")) {
+            result = new Ast.Expr.Group(parseExpression());
+            if (!match("\\)")) {
+                throw new ParseException("Missing right paren", 69);
+            }
+        } else if (match(Token.Type.IDENTIFIER)) {
+                if (match("\\(")) {
+                    List<Ast.Expr> parameters = new ArrayList<>();
+                    while (!peek("\\)")) {
+                        parameters.add(parseExpression());
+                        if (!match(",")) {
+                            break;
+                        }
+                    }
+                    if (!match("\\)")) {
+                        throw new ParseException("Missing right paren", 69);
+                    }
+                    result = new Ast.Expr.Function(Optional.empty(), tokens.get(-1).getLiteral(), parameters);
+                } else {
+                    result = new Ast.Expr.Access(Optional.empty(), tokens.get(-1).getLiteral());
+                }
+        } else {
+            throw new ParseException("Reached end of parsing primary expression...", 420);
+        }
+        return result;
     }
 
     /**
@@ -227,6 +293,25 @@ public final class Parser {
             index++;
         }
 
+    }
+
+    private static String stripUnescape(String string) {
+        return string.substring(1, string.length() - 1)
+                .replaceAll("\\\\\"", "\"")
+                .replaceAll("\\\\'", "'")
+                .replaceAll("\\\\\b", "\b")
+                .replaceAll("\\\\\n", "\n")
+                .replaceAll("\\\\\r", "\r")
+                .replaceAll("\\\\\t", "\t")
+                .replaceAll("\\\\\\\\", "\\")
+                ;
+    }
+
+    public static void main(String[] args) {
+        String test = "\"Test \\\"stringception\\\\\" String\"";
+        System.out.println(stripUnescape(test));
+        test = "'\\''";
+        System.out.println(stripUnescape(test));
     }
 
 }
