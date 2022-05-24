@@ -22,6 +22,9 @@ public class LexerTests {
         return Stream.of(
                 Arguments.of("Alphabetic", "getName", true),
                 Arguments.of("Alphanumeric", "thelegend27", true),
+                Arguments.of("Leading Underscore", "_five", true),
+                Arguments.of("Infixed hyphen", "one-two", true),
+                Arguments.of("Leading Hyphen", "-five", false),
                 Arguments.of("Leading Hyphen", "-five", false),
                 Arguments.of("Leading Digit", "1fish2fish3fishbluefish", false)
         );
@@ -39,6 +42,8 @@ public class LexerTests {
                 Arguments.of("Negative Integer", "-1", true),
                 Arguments.of("Decimal", "123.456", false),
                 Arguments.of("Signed Decimal", "-1.0", false),
+                Arguments.of("Extra positivity", "++1", false),
+                Arguments.of("Extra positivity for no one", "++", false),
                 Arguments.of("Trailing Decimal", "1.", false),
                 Arguments.of("Leading Decimal", ".5", false)
         );
@@ -59,6 +64,8 @@ public class LexerTests {
                 Arguments.of("Negative Decimal", "-1.0", true),
                 Arguments.of("Double Negative Decimal", "--1.0", false),
                 Arguments.of("Trailing Decimal", "1.", false),
+                Arguments.of("Extra positivity", "++1.0", false),
+                Arguments.of("Extra positivity for no one", "++", false),
                 Arguments.of("Leading Decimal", ".5", false)
         );
     }
@@ -76,7 +83,11 @@ public class LexerTests {
                 Arguments.of("Escaped Backslash", "'\\\\'", true),
                 Arguments.of("Escaped Single Quote", "'\\''", true),
                 Arguments.of("Unescaped Newline", "'\n'", false),
-                Arguments.of("Empty", "''", false),
+                Arguments.of("Empty Single Quotes", "''", false),
+                Arguments.of("Single Single Quote", "'", false),
+                Arguments.of("'a", "'a", false),
+                Arguments.of("a'", "a'", false),
+                Arguments.of("Just a newline", "\n", false),
                 Arguments.of("Multiple Alphabetic", "'abc'", false)
         );
     }
@@ -94,6 +105,7 @@ public class LexerTests {
                 Arguments.of("Symbolic", "\"#$\"", true),
                 Arguments.of("Escaped Newline", "\"Hello,\\nWorld\"", true),
                 Arguments.of("Unescaped Newline", "\"Hello,\nWorld\"", false),
+                Arguments.of("Trailing Newline", "\"Hello,World\"\n", false),
                 Arguments.of("Unterminated", "\"unterminated", false),
                 Arguments.of("Invalid Escape", "\"invalid\\escape\"", false)
         );
@@ -111,6 +123,7 @@ public class LexerTests {
                 Arguments.of("Character", "(", true),
                 Arguments.of("Comparison", "<=", true),
                 Arguments.of("Space", " ", false),
+                Arguments.of("Newline", "\n", false),
                 Arguments.of("Tab", "\t", false)
         );
     }
