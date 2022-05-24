@@ -18,6 +18,7 @@ import java.util.List;
  * helpers you need to use, they will make the implementation a lot easier.
  */
 public final class Lexer {
+    private final static String DIGIT = "[0-9]";
 
     private final CharStream chars;
 
@@ -32,7 +33,7 @@ public final class Lexer {
     public List<Token> lex() {
         ArrayList<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
-            while (match("\\s")) {
+            while (match("[ \b\n\r\t]")) {
                 chars.skip(); // advance past whitespace
             }
             tokens.add(lexToken()); // lex next token
@@ -51,8 +52,8 @@ public final class Lexer {
     public Token lexToken() {
         if (peek("[A-Za-z_]")) {
             return lexIdentifier();
-        } else if (peek("[0-9]")
-                || peek("[+|\\-]", "[0-9]")) {
+        } else if (peek(DIGIT)
+                || peek("[+|\\-]", DIGIT)) {
             return lexNumber();
         } else if (peek("'")) {
             return lexCharacter();
@@ -67,60 +68,69 @@ public final class Lexer {
         if (match("[A-Za-z_]")) {
             while (match("[A-Za-z0-9_-]"));
             return chars.emit(Token.Type.IDENTIFIER);
+        } else {
+            throw new ParseException("Invalid start of Identifier: ", chars.index);
         }
-        throw new ParseException("Unexpected character: ", chars.index);
     }
 
     public Token lexNumber() {
-        match("[+|\\-]");
-        Token.Type type = Token.Type.INTEGER;
-        while (match("\\d")) {
-            if (match("\\.")) {
-                if (type == Token.Type.DECIMAL) {
-                    throw new ParseException("Multiple decimal points encountered", chars.index);
+        if (match("[+|\\-]", DIGIT) || match(DIGIT)) {
+            Token.Type type = Token.Type.INTEGER;
+            do {
+                if (match("\\.")) {
+                    if (type == Token.Type.DECIMAL) {
+                        throw new ParseException("Multiple decimal points encountered: ", chars.index - 1);
+                    }
+                    if (!match(DIGIT)) {
+                        throw new ParseException("Expected character: ", chars.index);
+                    }
+                    type = Token.Type.DECIMAL;
                 }
-                if (!match("\\d")) {
-                    throw new ParseException("Expected digit following decimal point", chars.index);
-                }
-                type = Token.Type.DECIMAL;
-            }
+            } while (match(DIGIT));
+            return chars.emit(type);
+        } else {
+            throw new ParseException("Invalid start to Number: ", chars.index);
         }
-        return chars.emit(type);
     }
 
     public Token lexCharacter() {
         if (match("'")) {
-            if (peek("[^'\n\r]")) {
-                if (peek("\\\\")) {
-                    lexEscape();
-                } else {
-                    match("[^'\n\r]");
-                }
-                if (match("'")) {
-                    return chars.emit(Token.Type.CHARACTER);
-                } else {
-                    throw new ParseException("Missing: '", chars.index);
-                }
+            if (peek("\\\\")) {
+                lexEscape();
+            } else if (!match("[^'\n\r]")) {
+                throw new ParseException("Invalid character: ", chars.index);
             }
+            if (match("'")) {
+                return chars.emit(Token.Type.CHARACTER);
+            } else if (match("[^']")) { // this verifies there is indeed another character that is not: '
+                throw new ParseException("Invalid length for Character literal: ", chars.index);
+            } else {
+                throw new ParseException("Missing: '", chars.index + 1);
+            }
+        } else {
+            throw new ParseException("Invalid start of Character: ", chars.index);
         }
-        throw new ParseException("Unexpected character: ", chars.index);
     }
 
     public Token lexString() {
         if (match("\"")) {
-            while (peek("[^\"\n\r]")) {
-                if (match("[^\n\r\\\\]")) {
-                    continue;
+            String sequence = "[^\"\n\r]";
+            while (peek(sequence)) {
+                if (peek("\\\\")) {
+                    lexEscape();
+                } else {
+                    match(sequence);
                 }
-                lexEscape();
             }
             if (match("\"")) {
                 return chars.emit(Token.Type.STRING);
-            } else if (!match(".")) {
+            } else if (!match("[^\n\r]")) {
                 throw new ParseException("Unterminated string: ", chars.index);
             }
+        } else {
+            throw new ParseException("Invalid start of String: ", chars.index);
         }
-        throw new ParseException("Unexpected character: ", chars.index);
+        throw new RuntimeException("An unexpected error has occurred.");
     }
 
     public void lexEscape() {
@@ -131,7 +141,7 @@ public final class Lexer {
 
     public Token lexOperator() {
         if (!match("[<>!=]", "=")) {
-            match("\\S");
+            match("[^ \b\n\r\t]");
         }
         return chars.emit(Token.Type.OPERATOR);
     }
@@ -206,6 +216,11 @@ public final class Lexer {
             return new Token(type, input.substring(start, index), start);
         }
 
+    }
+
+    public static void main(String[] args) {
+        Lexer lexer = new Lexer("a'");
+        lexer.lexCharacter();
     }
 
 }
