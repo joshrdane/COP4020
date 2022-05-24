@@ -68,7 +68,7 @@ public final class Lexer {
             while (match("[A-Za-z0-9_-]"));
             return chars.emit(Token.Type.IDENTIFIER);
         }
-        throw new ParseException("Unexpected character: ", chars.index + 1);
+        throw new ParseException("Unexpected character: ", chars.index);
     }
 
     public Token lexNumber() {
@@ -80,7 +80,7 @@ public final class Lexer {
                     throw new ParseException("Multiple decimal points encountered", chars.index);
                 }
                 if (!match("\\d")) {
-                    throw new ParseException("Expected digit following decimal point", chars.index + 1);
+                    throw new ParseException("Expected digit following decimal point", chars.index);
                 }
                 type = Token.Type.DECIMAL;
             }
@@ -90,45 +90,42 @@ public final class Lexer {
 
     public Token lexCharacter() {
         if (match("'")) {
-            if (match("\\\\", "[bnrt'\"\\\\]") || match(".")) {
+            if (peek("[^'\n\r]")) {
+                if (peek("\\\\")) {
+                    lexEscape();
+                } else {
+                    match("[^'\n\r]");
+                }
                 if (match("'")) {
                     return chars.emit(Token.Type.CHARACTER);
                 } else {
-                    throw new ParseException("Missing: '", chars.index + 1);
+                    throw new ParseException("Missing: '", chars.index);
                 }
             }
         }
-        throw new ParseException("Unexpected character: ", chars.index + 1);
+        throw new ParseException("Unexpected character: ", chars.index);
     }
 
     public Token lexString() {
         if (match("\"")) {
-            while (!match("\"")) {
-                if (!chars.has(1)) {
-                    throw new ParseException("Unterminated String: ", chars.index + 1);
+            while (peek("[^\"\n\r]")) {
+                if (match("[^\n\r\\\\]")) {
+                    continue;
                 }
-                /*
-                // Begin escape sequence
-                if (match("\\\\")) {
-                    if (!match("[bnrt'\"\\\\]")) {
-                        throw new ParseException("Unexpected character: ", chars.index + 1);
-                    }
-                }
-                // End escape sequence
-                 */
                 lexEscape();
-                chars.advance();
             }
-            return chars.emit(Token.Type.STRING);
+            if (match("\"")) {
+                return chars.emit(Token.Type.STRING);
+            } else if (!match(".")) {
+                throw new ParseException("Unterminated string: ", chars.index);
+            }
         }
-        throw new ParseException("Unexpected character: ", chars.index + 1);
+        throw new ParseException("Unexpected character: ", chars.index);
     }
 
     public void lexEscape() {
-        if (match("\\\\")) {
-            if (!match("[bnrt'\"\\\\]")) {
-                throw new ParseException("Unexpected character: ", chars.index + 1);
-            }
+        if (!match("\\\\", "[bnrt'\"\\\\]")) {
+            throw new ParseException("Unexpected character: ", chars.index);
         }
     }
 
@@ -209,11 +206,6 @@ public final class Lexer {
             return new Token(type, input.substring(start, index), start);
         }
 
-    }
-
-    public static void main(String[] args) {
-        Lexer lex = new Lexer("12.34.56");
-        lex.lex();
     }
 
 }
