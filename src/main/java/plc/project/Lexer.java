@@ -94,13 +94,7 @@ public final class Lexer {
         if (match(RegexPattern.PLUS_OR_MINUS, RegexPattern.DIGIT) || match(RegexPattern.DIGIT)) {
             Token.Type type = Token.Type.INTEGER;
             do {
-                if (match(RegexPattern.PERIOD)) {
-                    if (type == Token.Type.DECIMAL) {
-                        throw new ParseException("Multiple decimal points encountered: ", chars.index - 1);
-                    }
-                    if (!match(RegexPattern.DIGIT)) {
-                        throw new ParseException("Expected digit, received: ", chars.index);
-                    }
+                if (type.equals(Token.Type.INTEGER) && match(RegexPattern.PERIOD, RegexPattern.DIGIT)) {
                     type = Token.Type.DECIMAL;
                 }
             } while (match(RegexPattern.DIGIT));
