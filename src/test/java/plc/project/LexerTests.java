@@ -143,6 +143,20 @@ public class LexerTests {
                         new Token(Token.Type.INTEGER, "5", 8),
                         new Token(Token.Type.OPERATOR, ";", 9)
                 )),
+                Arguments.of("Example 1 mod 1", "LET\rx\t=\b5; ", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "LET", 0),
+                        new Token(Token.Type.IDENTIFIER, "x", 4),
+                        new Token(Token.Type.OPERATOR, "=", 6),
+                        new Token(Token.Type.INTEGER, "5", 8),
+                        new Token(Token.Type.OPERATOR, ";", 9)
+                )),
+                Arguments.of("Example 1 mod 2", "LET x=5; ", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "LET", 0),
+                        new Token(Token.Type.IDENTIFIER, "x", 4),
+                        new Token(Token.Type.OPERATOR, "=", 5),
+                        new Token(Token.Type.INTEGER, "5", 6),
+                        new Token(Token.Type.OPERATOR, ";", 7)
+                )),
                 Arguments.of("Example 2", "print(\"Hello, World!\");\n", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "print", 0),
                         new Token(Token.Type.OPERATOR, "(", 5),
