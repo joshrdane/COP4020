@@ -197,21 +197,24 @@ public final class Parser {
                 throw new ParseException("Missing right paren", 69);
             }
         } else if (match(Token.Type.IDENTIFIER)) {
-                if (match("\\(")) {
-                    List<Ast.Expr> parameters = new ArrayList<>();
-                    while (!peek("\\)")) {
-                        parameters.add(parseExpression());
-                        if (!match(",")) {
-                            break;
-                        }
+            String literal = tokens.get(-1).getLiteral();
+            if (match("\\(")) {
+                List<Ast.Expr> parameters = new ArrayList<>();
+                while (!peek("\\)")) {
+                    parameters.add(parseExpression());
+                    if (!match(",")) {
+                        break;
+                    } else {
+                        throw new ParseException("Unexpected token: ", 1337);
                     }
-                    if (!match("\\)")) {
-                        throw new ParseException("Missing right paren", 69);
-                    }
-                    result = new Ast.Expr.Function(Optional.empty(), tokens.get(-1).getLiteral(), parameters);
-                } else {
-                    result = new Ast.Expr.Access(Optional.empty(), tokens.get(-1).getLiteral());
                 }
+                if (!match("\\)")) {
+                    throw new ParseException("Missing right paren", 69);
+                }
+                result = new Ast.Expr.Function(Optional.empty(), literal, parameters);
+            } else {
+                result = new Ast.Expr.Access(Optional.empty(), literal);
+            }
         } else {
             throw new ParseException("Reached end of parsing primary expression...", 420);
         }
