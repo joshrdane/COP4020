@@ -136,26 +136,37 @@ public class LexerTests {
 
     private static Stream<Arguments> testExamples() {
         return Stream.of(
-                Arguments.of("Example 1", "LET x = 5;", Arrays.asList(
+                Arguments.of("Example 1", "LET x = 5; ", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "LET", 0),
                         new Token(Token.Type.IDENTIFIER, "x", 4),
                         new Token(Token.Type.OPERATOR, "=", 6),
                         new Token(Token.Type.INTEGER, "5", 8),
                         new Token(Token.Type.OPERATOR, ";", 9)
                 )),
-                Arguments.of("Example 2", "print(\"Hello, World!\");", Arrays.asList(
+                Arguments.of("Example 2", "print(\"Hello, World!\");\n", Arrays.asList(
                         new Token(Token.Type.IDENTIFIER, "print", 0),
                         new Token(Token.Type.OPERATOR, "(", 5),
                         new Token(Token.Type.STRING, "\"Hello, World!\"", 6),
                         new Token(Token.Type.OPERATOR, ")", 21),
                         new Token(Token.Type.OPERATOR, ";", 22)
+                )),
+                Arguments.of("Test 1", "print('\\n');\n\t", Arrays.asList(
+                        new Token(Token.Type.IDENTIFIER, "print", 0),
+                        new Token(Token.Type.OPERATOR, "(", 5),
+                        new Token(Token.Type.CHARACTER, "'\\n'", 6),
+                        new Token(Token.Type.OPERATOR, ")", 10),
+                        new Token(Token.Type.OPERATOR, ";", 11)
                 ))
         );
     }
 
     @Test
     void testException() {
-        ParseException exception = Assertions.assertThrows(ParseException.class,
+        ParseException exception;
+        exception = Assertions.assertThrows(ParseException.class,
+                () -> new Lexer("'c").lex());
+        Assertions.assertEquals(2, exception.getIndex());
+        exception = Assertions.assertThrows(ParseException.class,
                 () -> new Lexer("\"unterminated").lex());
         Assertions.assertEquals(13, exception.getIndex());
     }
