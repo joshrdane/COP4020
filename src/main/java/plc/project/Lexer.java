@@ -33,10 +33,11 @@ public final class Lexer {
     public List<Token> lex() {
         ArrayList<Token> tokens = new ArrayList<>();
         while (chars.has(0)) {
-            while (match("[ \b\n\r\t]")) {
+            if (match("[ \b\n\r\t]")) {
                 chars.skip(); // advance past whitespace
+            } else {
+                tokens.add(lexToken()); // lex next token
             }
-            tokens.add(lexToken()); // lex next token
         }
         return tokens;
     }
@@ -97,7 +98,7 @@ public final class Lexer {
         if (match("'")) {
             if (peek("\\\\")) {
                 lexEscape();
-            } else if (!match("[^'\n\r]")) {
+            } else if (!match("[^'\n\r]")) { // consumes the character or throws an exception
                 throw new ParseException("Invalid character: ", chars.index);
             }
             if (match("'")) {
@@ -105,7 +106,7 @@ public final class Lexer {
             } else if (match("[^']")) { // this verifies there is indeed another character that is not: '
                 throw new ParseException("Invalid length for Character literal: ", chars.index);
             } else {
-                throw new ParseException("Missing: '", chars.index + 1);
+                throw new ParseException("Missing: '", chars.index);
             }
         } else {
             throw new ParseException("Invalid start of Character: ", chars.index);
