@@ -80,6 +80,7 @@ public final class Lexer {
         }
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     public Token lexIdentifier() {
         if (match(RegexPattern.IDENTIFIER_INIT)) {
             while (match(RegexPattern.IDENTIFIER_BODY));
