@@ -146,7 +146,7 @@ public final class Lexer {
 
     public void lexEscape() {
         if (!match(RegexPattern.BACKSLASH, RegexPattern.ESCAPE_BODY)) {
-            throw new ParseException("Unexpected character: ", chars.index);
+            throw new ParseException("Unexpected character: ", chars.index + 2);
         }
     }
 
