@@ -57,11 +57,23 @@ public final class Parser {
      */
     public Ast.Stmt parseStatement() throws ParseException {
         Ast.Stmt result;
-        Ast.Expr left = parseExpression();
-        if (match("=")) {
-            result = new Ast.Stmt.Assignment(left, parseExpression());
+        if (peek("LET")) {
+            result = parseDeclarationStatement();
+        } else if (peek("IF")) {
+            result = parseIfStatement();
+        } else if (peek("FOR")) {
+            result = parseForStatement();
+        } else if (peek("WHILE")) {
+            result = parseWhileStatement();
+        } else if (peek("RETURN")) {
+            result = parseReturnStatement();
         } else {
-            result = new Ast.Stmt.Expression(left);
+            Ast.Expr expression = parseExpression();
+            if (match("=")) {
+                result = new Ast.Stmt.Assignment(expression, parseExpression());
+            } else {
+                result = new Ast.Stmt.Expression(expression);
+            }
         }
         return result;
     }
@@ -72,7 +84,23 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("LET")) {
+            if (match(Token.Type.IDENTIFIER)) {
+                String name = tokens.get(-1).getLiteral();
+                Optional<Ast.Expr> value = Optional.empty();
+                if (match("=")) {
+                    value = Optional.of(parseExpression());
+                }
+                if (!match(";")) {
+                    throw new ParseException("Expected ';', received: ", tokens.index);
+                }
+                return new Ast.Stmt.Declaration(name, value);
+            } else {
+                throw new ParseException("Expected Identifier, received: ", tokens.index);
+            }
+        } else {
+            throw new RuntimeException("Reached impossible Declaration Statement");
+        }
     }
 
     /**
@@ -81,7 +109,29 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Stmt.If parseIfStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("IF")) {
+            Ast.Expr value = parseExpression();
+            if (match("DO")) {
+                List<Ast.Stmt> thenStatements = new ArrayList<>();
+                List<Ast.Stmt> elseStatements = new ArrayList<>();
+                while (!peek("ELSE") && !peek("END")) {
+                    thenStatements.add(parseStatement());
+                }
+                if (match("ELSE")) {
+                    while (!peek("END")) {
+                        elseStatements.add(parseStatement());
+                    }
+                }
+                if (!match("END")) {
+                    throw new ParseException("Expected END, received: ", tokens.index);
+                }
+                return new Ast.Stmt.If(value, thenStatements, elseStatements);
+            } else {
+                throw new ParseException("Expected DO, received: ", tokens.index);
+            }
+        } else {
+            throw new RuntimeException("Reached impossible If Statement");
+        }
     }
 
     /**
@@ -90,7 +140,29 @@ public final class Parser {
      * {@code FOR}.
      */
     public Ast.Stmt.For parseForStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("FOR")) {
+            if (match(Token.Type.IDENTIFIER)) {
+                String name = tokens.get(-1).getLiteral();
+                if (match("IN")) {
+                    Ast.Expr value = parseExpression();
+                    if (match("DO")) {
+                        List<Ast.Stmt> statements = new ArrayList<>();
+                        while (!match("END")) {
+                            statements.add(parseStatement());
+                        }
+                        return new Ast.Stmt.For(name, value, statements);
+                    } else {
+                        throw new ParseException("Expected DO, received: ", tokens.index);
+                    }
+                } else {
+                    throw new ParseException("Expected IN, received: ", tokens.index);
+                }
+            } else {
+                throw new ParseException("Expected Identifier, received: ", tokens.index);
+            }
+        } else {
+            throw new RuntimeException("Reached impossible For Statement");
+        }
     }
 
     /**
@@ -99,7 +171,20 @@ public final class Parser {
      * {@code WHILE}.
      */
     public Ast.Stmt.While parseWhileStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("WHILE")) {
+            Ast.Expr condition = parseExpression();
+            if (match("DO")) {
+                List<Ast.Stmt> statements = new ArrayList<>();
+                while (!match("END")) {
+                    statements.add(parseStatement());
+                }
+                return new Ast.Stmt.While(condition, statements);
+            } else {
+                throw new ParseException("Expected DO, received: ", tokens.index);
+            }
+        } else {
+            throw new RuntimeException("Reached impossible While Statement");
+        }
     }
 
     /**
@@ -108,7 +193,15 @@ public final class Parser {
      * {@code RETURN}.
      */
     public Ast.Stmt.Return parseReturnStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("RETURN")) {
+            if (match(Token.Type.IDENTIFIER)) {
+                return new Ast.Stmt.Return(parseExpression());
+            } else {
+                throw new ParseException("Expected Identifier, received: ", tokens.index);
+            }
+        } else {
+            throw new RuntimeException("Reached impossible Return Statement");
+        }
     }
 
     /**
