@@ -3,7 +3,6 @@ package plc.project;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -124,12 +123,8 @@ public final class Parser {
      */
     public Ast.Expr parseLogicalExpression() throws ParseException {
         Ast.Expr result = parseComparisonExpression();
-        while (peek("AND") | peek("OR")) {
-            if (match("AND")) {
-                result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseComparisonExpression());
-            } else if (match("OR")) {
-                result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseComparisonExpression());
-            }
+        while (match("AND") || match("OR")) {
+            result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseComparisonExpression());
         }
         return result;
     }
@@ -216,7 +211,7 @@ public final class Parser {
         } else if (match("(")) {
             result = new Ast.Expr.Group(parseExpression());
             if (!match(")")) {
-                throw new ParseException("Missing right paren", 69);
+                throw new ParseException("Missing right paren", tokens.index);
             }
         } else if (match(Token.Type.IDENTIFIER)) {
             String literal = tokens.get(-1).getLiteral();
@@ -226,7 +221,7 @@ public final class Parser {
                 result = new Ast.Expr.Access(Optional.empty(), literal);
             }
         } else {
-            throw new ParseException("Reached end of parsing primary expression...", 42);
+            throw new ParseException("Invalid Primary Expression", tokens.index);
         }
         return result;
     }
@@ -240,7 +235,7 @@ public final class Parser {
             }
         }
         if (!match(")")) {
-            throw new ParseException("Missing right paren", 69);
+            throw new ParseException("Missing right paren", tokens.index);
         }
         return new Ast.Expr.Function(receiver, literal, arguments);
     }
@@ -332,28 +327,6 @@ public final class Parser {
                 .replaceAll("\\\\t", "\t")
                 .replaceAll("\\\\\\\\", "\\")
                 ;
-    }
-
-    public static void main(String[] args) {
-        /*
-        String test = "\"Test \\\"stringception\\\\\" String\"";
-        System.out.println(stripUnescape(test));
-        test = "'\\''";
-        System.out.println(stripUnescape(test));
-         */
-        ArrayList<Token> test = new ArrayList<>(Arrays.asList(
-                //name(expr1, expr2, expr3)
-                new Token(Token.Type.IDENTIFIER, "name", 0),
-                new Token(Token.Type.OPERATOR, "(", 4),
-                new Token(Token.Type.IDENTIFIER, "expr1", 5),
-                new Token(Token.Type.OPERATOR, ",", 10),
-                new Token(Token.Type.IDENTIFIER, "expr2", 12),
-                new Token(Token.Type.OPERATOR, ",", 17),
-                new Token(Token.Type.IDENTIFIER, "expr3", 19),
-                new Token(Token.Type.OPERATOR, ")", 24)
-        ));
-        Parser parser = new Parser(test);
-        System.out.println(new Ast.Expr.Literal("Hello,\nWorld!"));
     }
 
 }
