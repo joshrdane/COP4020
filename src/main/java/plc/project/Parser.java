@@ -31,7 +31,15 @@ public final class Parser {
      * Parses the {@code source} rule.
      */
     public Ast.Source parseSource() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        List<Ast.Field> fields = new ArrayList<>();
+        while (peek("LET")) {
+            fields.add(parseField());
+        }
+        List<Ast.Method> methods = new ArrayList<>();
+        while (peek("DEF")) {
+            methods.add(parseMethod());
+        }
+        return new Ast.Source(fields, methods);
     }
 
     /**
@@ -39,7 +47,23 @@ public final class Parser {
      * next tokens start a field, aka {@code LET}.
      */
     public Ast.Field parseField() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("LET")) {
+            if (match(Token.Type.IDENTIFIER)) {
+                String name = tokens.get(-1).getLiteral();
+                Optional<Ast.Expr> value = Optional.empty();
+                if (match("=")) {
+                    value = Optional.of(parseExpression());
+                }
+                if (!match(";")) {
+                    throw new ParseException("Expected ';', received: ", tokens.index);
+                }
+                return new Ast.Stmt.Field(name, value);
+            } else {
+                throw new ParseException("Expected Identifier, received: ", tokens.index);
+            }
+        } else {
+            throw new RuntimeException("Reached impossible Declaration Statement");
+        }
     }
 
     /**
@@ -47,7 +71,37 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        if (match("DEF")) {
+            if (match(Token.Type.IDENTIFIER)) {
+                String name = tokens.get(-1).getLiteral();
+                List<String> parameters = new ArrayList<>();
+                List<Ast.Stmt> statements = new ArrayList<>();
+                if (match("(")) {
+                    while (match(Token.Type.IDENTIFIER)) {
+                        parameters.add(tokens.get(-1).getLiteral());
+                        if (!match(",")) {
+                            break;
+                        }
+                    }
+                    if (!match(")")) {
+                        throw new ParseException("Missing right paren", tokens.index);
+                    }
+                    if (!match("DO")) {
+                        throw new ParseException("Expected DO, received: ", tokens.index);
+                    }
+                    while (!match("END")) {
+                        statements.add(parseStatement());
+                    }
+                    return new Ast.Method(name, parameters, statements);
+                } else {
+                    throw new ParseException("Expected '(', received: ", tokens.index);
+                }
+            } else {
+                throw new ParseException("Expected Identifier, received: ", tokens.index);
+            }
+        } else {
+            throw new RuntimeException("Reached impossible Declaration Statement");
+        }
     }
 
     /**
