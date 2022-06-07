@@ -63,6 +63,9 @@ public final class Parser {
         } else {
             result = new Ast.Stmt.Expression(left);
         }
+        if (!match(";")) {
+            throw new ParseException("Expected ';', recevied: ", tokens.index);
+        }
         return result;
     }
 
@@ -211,7 +214,7 @@ public final class Parser {
         } else if (match("(")) {
             result = new Ast.Expr.Group(parseExpression());
             if (!match(")")) {
-                throw new ParseException("Missing right paren", tokens.index);
+                throw new ParseException("Missing right paren", tokens.index + 1);
             }
         } else if (match(Token.Type.IDENTIFIER)) {
             String literal = tokens.get(-1).getLiteral();
@@ -228,14 +231,13 @@ public final class Parser {
 
     private Ast.Expr parseFunction(Optional<Ast.Expr> receiver, String literal) {
         List<Ast.Expr> arguments = new ArrayList<>();
-        while (!peek(")")) {
-            arguments.add(parseExpression());
-            if (!match(",")) {
-                break;
-            }
+        if (!peek(")")) {
+            do {
+                arguments.add(parseExpression());
+            } while (match(","));
         }
         if (!match(")")) {
-            throw new ParseException("Missing right paren", tokens.index);
+            throw new ParseException("Missing right paren", tokens.index + 1);
         }
         return new Ast.Expr.Function(receiver, literal, arguments);
     }
