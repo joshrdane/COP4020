@@ -258,12 +258,7 @@ public final class Parser {
     public Ast.Expr parseSecondaryExpression() throws ParseException {
         Ast.Expr result = parsePrimaryExpression();
         while (match(".")) {
-            String literal = require(Token.Type.IDENTIFIER);
-            if (match("(")) {
-                result = parseFunction(Optional.of(result), literal);
-            } else {
-                result = new Ast.Expr.Access(Optional.of(result), literal);
-            }
+            result = parseFunction(Optional.of(result));
         }
         return result;
     }
@@ -293,28 +288,28 @@ public final class Parser {
         } else if (match("(")) {
             result = new Ast.Expr.Group(parseExpression());
             require(")");
-        } else if (match(Token.Type.IDENTIFIER)) {
-            String literal = getPreviousTokenLiteral();
-            if (match("(")) {
-                result = parseFunction(Optional.empty(), literal);
-            } else {
-                result = new Ast.Expr.Access(Optional.empty(), literal);
-            }
+        } else if (peek(Token.Type.IDENTIFIER)) {
+            result = parseFunction(Optional.empty());
         } else {
             throw new ParseException("Invalid Primary Expression", tokens.get(0).getIndex());
         }
         return result;
     }
 
-    private Ast.Expr parseFunction(Optional<Ast.Expr> receiver, String literal) {
+    private Ast.Expr parseFunction(Optional<Ast.Expr> receiver) {
         List<Ast.Expr> arguments = new ArrayList<>();
-        if (!peek(")")) {
-            do {
-                arguments.add(parseExpression());
-            } while (match(","));
+        String literal = require(Token.Type.IDENTIFIER);
+        if (match("(")) {
+            if (!peek(")")) {
+                do {
+                    arguments.add(parseExpression());
+                } while (match(","));
+            }
+            require(")");
+            return new Ast.Expr.Function(receiver, literal, arguments);
+        } else {
+            return new Ast.Expr.Access(receiver, literal);
         }
-        require(")");
-        return new Ast.Expr.Function(receiver, literal, arguments);
     }
 
     private String require(Object pattern) {
