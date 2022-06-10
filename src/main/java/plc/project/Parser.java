@@ -47,21 +47,14 @@ public final class Parser {
      * next tokens start a field, aka {@code LET}.
      */
     public Ast.Field parseField() throws ParseException {
-        if (match("LET")) {
-            if (match(Token.Type.IDENTIFIER)) {
-                String name = tokens.get(-1).getLiteral();
-                Optional<Ast.Expr> value = Optional.empty();
-                if (match("=")) {
-                    value = Optional.of(parseExpression());
-                }
-                require(";");
-                return new Ast.Stmt.Field(name, value);
-            } else {
-                throw new ParseException("Expected Identifier, received: ", tokens.index);
-            }
-        } else {
-            throw new RuntimeException("Reached impossible Declaration Statement");
+        require("LET");
+        String name = require(Token.Type.IDENTIFIER);
+        Optional<Ast.Expr> value = Optional.empty();
+        if (match("=")) {
+            value = Optional.of(parseExpression());
         }
+        require(";");
+        return new Ast.Stmt.Field(name, value);
     }
 
     /**
@@ -69,29 +62,22 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException {
-        if (match("DEF")) {
-            if (match(Token.Type.IDENTIFIER)) {
-                String name = tokens.get(-1).getLiteral();
-                List<String> parameters = new ArrayList<>();
-                List<Ast.Stmt> statements = new ArrayList<>();
-                require("(");
-                if (peek(Token.Type.IDENTIFIER)) {
-                    do {
-                        parameters.add(tokens.get(-1).getLiteral());
-                    } while (match(","));
-                }
-                require(")");
-                require("DO");
-                while (!match("END")) {
-                    statements.add(parseStatement());
-                }
-                return new Ast.Method(name, parameters, statements);
-            } else {
-                throw new ParseException("Expected Identifier, received: ", tokens.index);
-            }
-        } else {
-            throw new RuntimeException("Reached impossible Declaration Statement");
+        require("DEF");
+        String name = require(Token.Type.IDENTIFIER);
+        List<String> parameters = new ArrayList<>();
+        List<Ast.Stmt> statements = new ArrayList<>();
+        require("(");
+        if (peek(Token.Type.IDENTIFIER)) {
+            do {
+                parameters.add(getPreviousTokenLiteral());
+            } while (match(","));
         }
+        require(")");
+        require("DO");
+        while (!match("END")) {
+            statements.add(parseStatement());
+        }
+        return new Ast.Method(name, parameters, statements);
     }
 
     /**
@@ -129,21 +115,14 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException {
-        if (match("LET")) {
-            if (match(Token.Type.IDENTIFIER)) {
-                String name = tokens.get(-1).getLiteral();
-                Optional<Ast.Expr> value = Optional.empty();
-                if (match("=")) {
-                    value = Optional.of(parseExpression());
-                }
-                require(";");
-                return new Ast.Stmt.Declaration(name, value);
-            } else {
-                throw new ParseException("Expected Identifier, received: ", tokens.index);
-            }
-        } else {
-            throw new RuntimeException("Reached impossible Declaration Statement");
+        require("LET");
+        String name = require(Token.Type.IDENTIFIER);
+        Optional<Ast.Expr> value = Optional.empty();
+        if (match("=")) {
+            value = Optional.of(parseExpression());
         }
+        require(";");
+        return new Ast.Stmt.Declaration(name, value);
     }
 
     /**
@@ -152,29 +131,21 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Stmt.If parseIfStatement() throws ParseException {
-        if (match("IF")) {
-            Ast.Expr value = parseExpression();
-            if (match("DO")) {
-                List<Ast.Stmt> thenStatements = new ArrayList<>();
-                List<Ast.Stmt> elseStatements = new ArrayList<>();
-                while (!peek("ELSE") && !peek("END")) {
-                    thenStatements.add(parseStatement());
-                }
-                if (match("ELSE")) {
-                    while (!peek("END")) {
-                        elseStatements.add(parseStatement());
-                    }
-                }
-                if (!match("END")) {
-                    throw new ParseException("Expected END, received: ", tokens.index);
-                }
-                return new Ast.Stmt.If(value, thenStatements, elseStatements);
-            } else {
-                throw new ParseException("Expected DO, received: ", tokens.index);
-            }
-        } else {
-            throw new RuntimeException("Reached impossible If Statement");
+        require("IF");
+        Ast.Expr value = parseExpression();
+        require("DO");
+        List<Ast.Stmt> thenStatements = new ArrayList<>();
+        List<Ast.Stmt> elseStatements = new ArrayList<>();
+        while (!peek("ELSE") && !peek("END")) {
+            thenStatements.add(parseStatement());
         }
+        if (match("ELSE")) {
+            while (!peek("END")) {
+                elseStatements.add(parseStatement());
+            }
+        }
+        require("END");
+        return new Ast.Stmt.If(value, thenStatements, elseStatements);
     }
 
     /**
@@ -184,8 +155,7 @@ public final class Parser {
      */
     public Ast.Stmt.For parseForStatement() throws ParseException {
         require("FOR");
-        require(Token.Type.IDENTIFIER);
-        String name = tokens.get(-1).getLiteral();
+        String name = require(Token.Type.IDENTIFIER);
         require("IN");
         Ast.Expr value = parseExpression();
         require("DO");
@@ -220,12 +190,8 @@ public final class Parser {
     public Ast.Stmt.Return parseReturnStatement() throws ParseException {
         Ast.Stmt.Return result;
         require("RETURN");
-        if (peek(Token.Type.IDENTIFIER)) {
-            result =  new Ast.Stmt.Return(parseExpression());
-            require(";");
-        } else {
-            throw new ParseException("Expected Identifier, received: ", tokens.index);
-        }
+        result =  new Ast.Stmt.Return(parseExpression());
+        require(";");
         return result;
     }
 
@@ -243,7 +209,7 @@ public final class Parser {
         Ast.Expr result = parseComparisonExpression();
         if (peek("AND") || peek("OR")) {
             while (match("AND") || match("OR")) {
-                result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseComparisonExpression());
+                result = new Ast.Expr.Binary(getPreviousTokenLiteral(), result, parseComparisonExpression());
             }
         }
         return result;
@@ -252,7 +218,7 @@ public final class Parser {
     public Ast.Expr parseComparisonExpression() throws ParseException {
         Ast.Expr result = parseAdditiveExpression();
         while (match("<") || match("<=") || match(">") || match(">=") || match("==") || match("!=")) {
-            result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseAdditiveExpression());
+            result = new Ast.Expr.Binary(getPreviousTokenLiteral(), result, parseAdditiveExpression());
         }
         return result;
     }
@@ -270,7 +236,7 @@ public final class Parser {
     public Ast.Expr parseAdditiveExpression() throws ParseException {
         Ast.Expr result = parseMultiplicativeExpression();
         while (match("+") || match("-")) {
-            result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseMultiplicativeExpression());
+            result = new Ast.Expr.Binary(getPreviousTokenLiteral(), result, parseMultiplicativeExpression());
         }
         return result;
     }
@@ -281,7 +247,7 @@ public final class Parser {
     public Ast.Expr parseMultiplicativeExpression() throws ParseException {
         Ast.Expr result = parseSecondaryExpression();
         while (match("*") || match("/")) {
-            result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseSecondaryExpression());
+            result = new Ast.Expr.Binary(getPreviousTokenLiteral(), result, parseSecondaryExpression());
         }
         return result;
     }
@@ -292,8 +258,7 @@ public final class Parser {
     public Ast.Expr parseSecondaryExpression() throws ParseException {
         Ast.Expr result = parsePrimaryExpression();
         while (match(".")) {
-            require(Token.Type.IDENTIFIER);
-            String literal = tokens.get(-1).getLiteral();
+            String literal = require(Token.Type.IDENTIFIER);
             if (match("(")) {
                 result = parseFunction(Optional.of(result), literal);
             } else {
@@ -318,18 +283,18 @@ public final class Parser {
         } else if (match("FALSE")) {
             result = new Ast.Expr.Literal(false);
         } else if (match(Token.Type.INTEGER)) {
-            result = new Ast.Expr.Literal(new BigInteger(tokens.get(-1).getLiteral()));
+            result = new Ast.Expr.Literal(new BigInteger(getPreviousTokenLiteral()));
         } else if (match(Token.Type.DECIMAL)) {
-            result = new Ast.Expr.Literal(new BigDecimal(tokens.get(-1).getLiteral()));
+            result = new Ast.Expr.Literal(new BigDecimal(getPreviousTokenLiteral()));
         } else if (match(Token.Type.CHARACTER)) {
-            result = new Ast.Expr.Literal(stripUnescape(tokens.get(-1).getLiteral()).charAt(0));
+            result = new Ast.Expr.Literal(stripUnescape(getPreviousTokenLiteral()).charAt(0));
         } else if (match(Token.Type.STRING)) {
-            result = new Ast.Expr.Literal(stripUnescape(tokens.get(-1).getLiteral()));
+            result = new Ast.Expr.Literal(stripUnescape(getPreviousTokenLiteral()));
         } else if (match("(")) {
             result = new Ast.Expr.Group(parseExpression());
             require(")");
         } else if (match(Token.Type.IDENTIFIER)) {
-            String literal = tokens.get(-1).getLiteral();
+            String literal = getPreviousTokenLiteral();
             if (match("(")) {
                 result = parseFunction(Optional.empty(), literal);
             } else {
@@ -352,16 +317,20 @@ public final class Parser {
         return new Ast.Expr.Function(receiver, literal, arguments);
     }
 
-    private void require(Object ... patterns) {
-        for (Object pattern : patterns) {
-            if (!match(pattern)) {
-                if (tokens.has(0)) {
-                    throw new ParseException(String.format("Expected '%s', received: ", pattern), tokens.get(0).getIndex());
-                } else {
-                    throw new ParseException(String.format("Missing '%s'!", pattern), tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
-                }
+    private String require(Object pattern) {
+        if (match(pattern)) {
+            return getPreviousTokenLiteral();
+        } else {
+            if (tokens.has(0)) {
+                throw new ParseException(String.format("Expected '%s', received: ", pattern), tokens.get(0).getIndex());
+            } else {
+                throw new ParseException(String.format("Missing '%s'!", pattern), tokens.get(-1).getIndex() + getPreviousTokenLiteral().length());
             }
         }
+    }
+    
+    private String getPreviousTokenLiteral() {
+        return tokens.get(-1).getLiteral();
     }
 
     /**
