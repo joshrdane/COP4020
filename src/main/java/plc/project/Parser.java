@@ -64,7 +64,7 @@ public final class Parser {
             result = new Ast.Stmt.Expression(left);
         }
         if (!match(";")) {
-            throw new ParseException("Expected ';', recevied: ", tokens.index);
+            throw new ParseException("Expected ';', recevied: ", tokens.index + 1);
         }
         return result;
     }
