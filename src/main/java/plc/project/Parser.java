@@ -129,6 +129,7 @@ public final class Parser {
                 result = new Ast.Stmt.Expression(expression);
             }
         }
+        generateMissingOrUnexpectedParseException(";");
         return result;
     }
 
@@ -326,8 +327,10 @@ public final class Parser {
                 } else {
                     result = new Ast.Expr.Access(Optional.of(result), literal);
                 }
+            } else if (tokens.has(0)) {
+                throw new ParseException("Unexpected token: ", tokens.get(0).getIndex());
             } else {
-                throw new ParseException("Expected Identifier", -1);
+                throw new ParseException("Expected Identifier", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
             }
         }
         return result;
@@ -357,9 +360,7 @@ public final class Parser {
             result = new Ast.Expr.Literal(stripUnescape(tokens.get(-1).getLiteral()));
         } else if (match("(")) {
             result = new Ast.Expr.Group(parseExpression());
-            if (!match(")")) {
-                throw new ParseException("Missing right paren", tokens.index);
-            }
+            generateMissingOrUnexpectedParseException(")");
         } else if (match(Token.Type.IDENTIFIER)) {
             String literal = tokens.get(-1).getLiteral();
             if (match("(")) {
@@ -368,23 +369,30 @@ public final class Parser {
                 result = new Ast.Expr.Access(Optional.empty(), literal);
             }
         } else {
-            throw new ParseException("Invalid Primary Expression", tokens.index);
+            throw new ParseException("Invalid Primary Expression", tokens.get(0).getIndex());
         }
         return result;
     }
 
     private Ast.Expr parseFunction(Optional<Ast.Expr> receiver, String literal) {
         List<Ast.Expr> arguments = new ArrayList<>();
-        while (!peek(")")) {
-            arguments.add(parseExpression());
-            if (!match(",")) {
-                break;
+        if (!peek(")")) {
+            do {
+                arguments.add(parseExpression());
+            } while (match(","));
+        }
+        generateMissingOrUnexpectedParseException(")");
+        return new Ast.Expr.Function(receiver, literal, arguments);
+    }
+
+    private void generateMissingOrUnexpectedParseException(String expected) {
+        if (!match(expected)) {
+            if (tokens.has(0)) {
+                throw new ParseException(String.format("Expected '%s', recevied: ", expected), tokens.get(0).getIndex());
+            } else {
+                throw new ParseException(String.format("Missing '%s'!", expected), tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
             }
         }
-        if (!match(")")) {
-            throw new ParseException("Missing right paren", tokens.index);
-        }
-        return new Ast.Expr.Function(receiver, literal, arguments);
     }
 
     /**
