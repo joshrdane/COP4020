@@ -21,13 +21,21 @@ final class ParserExpressionTests {
 
     @ParameterizedTest
     @MethodSource
-    void testExpressionStatement(String test, List<Token> tokens, Ast.Stmt.Expression expected) {
+    void testStmtExpression(String test, List<Token> tokens, Ast.Stmt.Expression expected) {
         test(tokens, expected, Parser::parseStatement);
     }
 
-    private static Stream<Arguments> testExpressionStatement() {
+    private static Stream<Arguments> testStmtExpression() {
         return Stream.of(
-                Arguments.of("Function Expression",
+                Arguments.of("Expression Variable",
+                        Arrays.asList(
+                                //name();
+                                new Token(Token.Type.IDENTIFIER, "expr", 0),
+                                new Token(Token.Type.OPERATOR, ";", 4)
+                        ),
+                        new Ast.Stmt.Expression(new Ast.Expr.Access(Optional.empty(), "expr"))
+                ),
+                Arguments.of("Expression Function",
                         Arrays.asList(
                                 //name();
                                 new Token(Token.Type.IDENTIFIER, "name", 0),
@@ -42,23 +50,36 @@ final class ParserExpressionTests {
 
     @ParameterizedTest
     @MethodSource
-    void testAssignmentStatement(String test, List<Token> tokens, Ast.Stmt.Assignment expected) {
+    void testStmtAssignment(String test, List<Token> tokens, Ast.Stmt.Assignment expected) {
         test(tokens, expected, Parser::parseStatement);
     }
 
-    private static Stream<Arguments> testAssignmentStatement() {
+    private static Stream<Arguments> testStmtAssignment() {
         return Stream.of(
-                Arguments.of("Assignment",
+                Arguments.of("Assignment Variable",
                         Arrays.asList(
-                                //name = value;
                                 new Token(Token.Type.IDENTIFIER, "name", 0),
                                 new Token(Token.Type.OPERATOR, "=", 5),
-                                new Token(Token.Type.IDENTIFIER, "value", 7),
-                                new Token(Token.Type.OPERATOR, ";", 12)
+                                new Token(Token.Type.IDENTIFIER, "expr", 7),
+                                new Token(Token.Type.OPERATOR, ";", 11)
                         ),
                         new Ast.Stmt.Assignment(
                                 new Ast.Expr.Access(Optional.empty(), "name"),
-                                new Ast.Expr.Access(Optional.empty(), "value")
+                                new Ast.Expr.Access(Optional.empty(), "expr")
+                        )
+                ),
+                Arguments.of("Assignment Field",
+                        Arrays.asList(
+                                new Token(Token.Type.IDENTIFIER, "object", 0),
+                                new Token(Token.Type.OPERATOR, ".", 6),
+                                new Token(Token.Type.IDENTIFIER, "field", 7),
+                                new Token(Token.Type.OPERATOR, "=", 13),
+                                new Token(Token.Type.IDENTIFIER, "expr", 15),
+                                new Token(Token.Type.OPERATOR, ";", 19)
+                        ),
+                        new Ast.Stmt.Assignment(
+                                new Ast.Expr.Access(Optional.of(new Ast.Expr.Access(Optional.empty(), "object")), "field"),
+                                new Ast.Expr.Access(Optional.empty(), "expr")
                         )
                 )
         );
