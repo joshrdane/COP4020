@@ -31,7 +31,15 @@ public final class Parser {
      * Parses the {@code source} rule.
      */
     public Ast.Source parseSource() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        List<Ast.Field> fields = new ArrayList<>();
+        while (peek("LET")) {
+            fields.add(parseField());
+        }
+        List<Ast.Method> methods = new ArrayList<>();
+        while (peek("DEF")) {
+            methods.add(parseMethod());
+        }
+        return new Ast.Source(fields, methods);
     }
 
     /**
@@ -39,7 +47,14 @@ public final class Parser {
      * next tokens start a field, aka {@code LET}.
      */
     public Ast.Field parseField() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        require("LET");
+        String name = require(Token.Type.IDENTIFIER);
+        Optional<Ast.Expr> value = Optional.empty();
+        if (match("=")) {
+            value = Optional.of(parseExpression());
+        }
+        require(";");
+        return new Ast.Stmt.Field(name, value);
     }
 
     /**
@@ -47,7 +62,22 @@ public final class Parser {
      * next tokens start a method, aka {@code DEF}.
      */
     public Ast.Method parseMethod() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        require("DEF");
+        String name = require(Token.Type.IDENTIFIER);
+        List<String> parameters = new ArrayList<>();
+        List<Ast.Stmt> statements = new ArrayList<>();
+        require("(");
+        if (peek(Token.Type.IDENTIFIER)) {
+            do {
+                parameters.add(getPreviousTokenLiteral());
+            } while (match(","));
+        }
+        require(")");
+        require("DO");
+        while (!match("END")) {
+            statements.add(parseStatement());
+        }
+        return new Ast.Method(name, parameters, statements);
     }
 
     /**
@@ -57,13 +87,25 @@ public final class Parser {
      */
     public Ast.Stmt parseStatement() throws ParseException {
         Ast.Stmt result;
-        Ast.Expr left = parseExpression();
-        if (match("=")) {
-            result = new Ast.Stmt.Assignment(left, parseExpression());
+        if (peek("LET")) {
+            result = parseDeclarationStatement();
+        } else if (peek("IF")) {
+            result = parseIfStatement();
+        } else if (peek("FOR")) {
+            result = parseForStatement();
+        } else if (peek("WHILE")) {
+            result = parseWhileStatement();
+        } else if (peek("RETURN")) {
+            result = parseReturnStatement();
         } else {
-            result = new Ast.Stmt.Expression(left);
+            Ast.Expr expression = parseExpression();
+            if (match("=")) {
+                result = new Ast.Stmt.Assignment(expression, parseExpression());
+            } else {
+                result = new Ast.Stmt.Expression(expression);
+            }
+            require(";");
         }
-        generateMissingOrUnexpectedParseException(";");
         return result;
     }
 
@@ -73,7 +115,14 @@ public final class Parser {
      * statement, aka {@code LET}.
      */
     public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        require("LET");
+        String name = require(Token.Type.IDENTIFIER);
+        Optional<Ast.Expr> value = Optional.empty();
+        if (match("=")) {
+            value = Optional.of(parseExpression());
+        }
+        require(";");
+        return new Ast.Stmt.Declaration(name, value);
     }
 
     /**
@@ -82,7 +131,21 @@ public final class Parser {
      * {@code IF}.
      */
     public Ast.Stmt.If parseIfStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        require("IF");
+        Ast.Expr value = parseExpression();
+        require("DO");
+        List<Ast.Stmt> thenStatements = new ArrayList<>();
+        List<Ast.Stmt> elseStatements = new ArrayList<>();
+        while (!peek("ELSE") && !peek("END")) {
+            thenStatements.add(parseStatement());
+        }
+        if (match("ELSE")) {
+            while (!peek("END")) {
+                elseStatements.add(parseStatement());
+            }
+        }
+        require("END");
+        return new Ast.Stmt.If(value, thenStatements, elseStatements);
     }
 
     /**
@@ -91,7 +154,16 @@ public final class Parser {
      * {@code FOR}.
      */
     public Ast.Stmt.For parseForStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        require("FOR");
+        String name = require(Token.Type.IDENTIFIER);
+        require("IN");
+        Ast.Expr value = parseExpression();
+        require("DO");
+        List<Ast.Stmt> statements = new ArrayList<>();
+        while (!match("END")) {
+            statements.add(parseStatement());
+        }
+        return new Ast.Stmt.For(name, value, statements);
     }
 
     /**
@@ -100,7 +172,14 @@ public final class Parser {
      * {@code WHILE}.
      */
     public Ast.Stmt.While parseWhileStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        require("WHILE");
+        Ast.Expr condition = parseExpression();
+        require("DO");
+        List<Ast.Stmt> statements = new ArrayList<>();
+        while (!match("END")) {
+            statements.add(parseStatement());
+        }
+        return new Ast.Stmt.While(condition, statements);
     }
 
     /**
@@ -109,7 +188,11 @@ public final class Parser {
      * {@code RETURN}.
      */
     public Ast.Stmt.Return parseReturnStatement() throws ParseException {
-        throw new UnsupportedOperationException(); //TODO
+        Ast.Stmt.Return result;
+        require("RETURN");
+        result =  new Ast.Stmt.Return(parseExpression());
+        require(";");
+        return result;
     }
 
     /**
@@ -124,8 +207,10 @@ public final class Parser {
      */
     public Ast.Expr parseLogicalExpression() throws ParseException {
         Ast.Expr result = parseComparisonExpression();
-        while (match("AND") || match("OR")) {
-            result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseComparisonExpression());
+        if (peek("AND") || peek("OR")) {
+            while (match("AND") || match("OR")) {
+                result = new Ast.Expr.Binary(getPreviousTokenLiteral(), result, parseComparisonExpression());
+            }
         }
         return result;
     }
@@ -133,7 +218,7 @@ public final class Parser {
     public Ast.Expr parseComparisonExpression() throws ParseException {
         Ast.Expr result = parseAdditiveExpression();
         while (match("<") || match("<=") || match(">") || match(">=") || match("==") || match("!=")) {
-            result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseAdditiveExpression());
+            result = new Ast.Expr.Binary(getPreviousTokenLiteral(), result, parseAdditiveExpression());
         }
         return result;
     }
@@ -151,7 +236,7 @@ public final class Parser {
     public Ast.Expr parseAdditiveExpression() throws ParseException {
         Ast.Expr result = parseMultiplicativeExpression();
         while (match("+") || match("-")) {
-            result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseMultiplicativeExpression());
+            result = new Ast.Expr.Binary(getPreviousTokenLiteral(), result, parseMultiplicativeExpression());
         }
         return result;
     }
@@ -162,7 +247,7 @@ public final class Parser {
     public Ast.Expr parseMultiplicativeExpression() throws ParseException {
         Ast.Expr result = parseSecondaryExpression();
         while (match("*") || match("/")) {
-            result = new Ast.Expr.Binary(tokens.get(-1).getLiteral(), result, parseSecondaryExpression());
+            result = new Ast.Expr.Binary(getPreviousTokenLiteral(), result, parseSecondaryExpression());
         }
         return result;
     }
@@ -173,18 +258,7 @@ public final class Parser {
     public Ast.Expr parseSecondaryExpression() throws ParseException {
         Ast.Expr result = parsePrimaryExpression();
         while (match(".")) {
-            if (match(Token.Type.IDENTIFIER)) {
-                String literal = tokens.get(-1).getLiteral();
-                if (match("(")) {
-                    result = parseFunction(Optional.of(result), literal);
-                } else {
-                    result = new Ast.Expr.Access(Optional.of(result), literal);
-                }
-            } else if (tokens.has(0)) {
-                throw new ParseException("Unexpected token: ", tokens.get(0).getIndex());
-            } else {
-                throw new ParseException("Expected Identifier", tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
-            }
+            result = parseFunction(Optional.of(result));
         }
         return result;
     }
@@ -204,48 +278,54 @@ public final class Parser {
         } else if (match("FALSE")) {
             result = new Ast.Expr.Literal(false);
         } else if (match(Token.Type.INTEGER)) {
-            result = new Ast.Expr.Literal(new BigInteger(tokens.get(-1).getLiteral()));
+            result = new Ast.Expr.Literal(new BigInteger(getPreviousTokenLiteral()));
         } else if (match(Token.Type.DECIMAL)) {
-            result = new Ast.Expr.Literal(new BigDecimal(tokens.get(-1).getLiteral()));
+            result = new Ast.Expr.Literal(new BigDecimal(getPreviousTokenLiteral()));
         } else if (match(Token.Type.CHARACTER)) {
-            result = new Ast.Expr.Literal(stripUnescape(tokens.get(-1).getLiteral()).charAt(0));
+            result = new Ast.Expr.Literal(stripUnescape(getPreviousTokenLiteral()).charAt(0));
         } else if (match(Token.Type.STRING)) {
-            result = new Ast.Expr.Literal(stripUnescape(tokens.get(-1).getLiteral()));
+            result = new Ast.Expr.Literal(stripUnescape(getPreviousTokenLiteral()));
         } else if (match("(")) {
             result = new Ast.Expr.Group(parseExpression());
-            generateMissingOrUnexpectedParseException(")");
-        } else if (match(Token.Type.IDENTIFIER)) {
-            String literal = tokens.get(-1).getLiteral();
-            if (match("(")) {
-                result = parseFunction(Optional.empty(), literal);
-            } else {
-                result = new Ast.Expr.Access(Optional.empty(), literal);
-            }
+            require(")");
+        } else if (peek(Token.Type.IDENTIFIER)) {
+            result = parseFunction(Optional.empty());
         } else {
             throw new ParseException("Invalid Primary Expression", tokens.get(0).getIndex());
         }
         return result;
     }
 
-    private Ast.Expr parseFunction(Optional<Ast.Expr> receiver, String literal) {
+    private Ast.Expr parseFunction(Optional<Ast.Expr> receiver) {
         List<Ast.Expr> arguments = new ArrayList<>();
-        if (!peek(")")) {
-            do {
-                arguments.add(parseExpression());
-            } while (match(","));
+        String literal = require(Token.Type.IDENTIFIER);
+        if (match("(")) {
+            if (!peek(")")) {
+                do {
+                    arguments.add(parseExpression());
+                } while (match(","));
+            }
+            require(")");
+            return new Ast.Expr.Function(receiver, literal, arguments);
+        } else {
+            return new Ast.Expr.Access(receiver, literal);
         }
-        generateMissingOrUnexpectedParseException(")");
-        return new Ast.Expr.Function(receiver, literal, arguments);
     }
 
-    private void generateMissingOrUnexpectedParseException(String expected) {
-        if (!match(expected)) {
+    private String require(Object pattern) {
+        if (match(pattern)) {
+            return getPreviousTokenLiteral();
+        } else {
             if (tokens.has(0)) {
-                throw new ParseException(String.format("Expected '%s', recevied: ", expected), tokens.get(0).getIndex());
+                throw new ParseException(String.format("Expected '%s', received: ", pattern), tokens.get(0).getIndex());
             } else {
-                throw new ParseException(String.format("Missing '%s'!", expected), tokens.get(-1).getIndex() + tokens.get(-1).getLiteral().length());
+                throw new ParseException(String.format("Missing '%s'!", pattern), tokens.get(-1).getIndex() + getPreviousTokenLiteral().length());
             }
         }
+    }
+    
+    private String getPreviousTokenLiteral() {
+        return tokens.get(-1).getLiteral();
     }
 
     /**
