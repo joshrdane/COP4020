@@ -31,7 +31,7 @@ public final class Lexer {
         final static String WHITESPACE = "[ \b\n\r\t]";
         final static String NONWHITESPACE = "[^ \b\n\r\t]";
         final static String OPERATOR = "[<>!=]";
-        final static String EQUAL = "[<>!=]";
+        final static String EQUAL = "[=]";
         final static String PERIOD = "[\\.]";
     }
 
