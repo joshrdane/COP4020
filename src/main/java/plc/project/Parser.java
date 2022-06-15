@@ -39,6 +39,9 @@ public final class Parser {
         while (peek("DEF")) {
             methods.add(parseMethod());
         }
+        if (tokens.has(0)) {
+            throw new ParseException("Unexpected token: ", tokens.index);
+        }
         return new Ast.Source(fields, methods);
     }
 
