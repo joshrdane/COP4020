@@ -64,7 +64,16 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.For ast) {
-        throw new UnsupportedOperationException(); //TODO
+        requireType(Iterable.class, visit(ast.getValue())).forEach((plcObject) -> {
+            try {
+                scope = new Scope(scope);
+                scope.defineVariable(ast.getName(), Environment.NIL); // Initialize the variable as NIL ???
+                ast.getStatements().forEach(this::visit);
+            } finally {
+                scope = scope.getParent();
+            }
+        });
+        return Environment.NIL;
     }
 
     @Override
