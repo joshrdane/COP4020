@@ -39,6 +39,9 @@ public final class Parser {
         while (peek("DEF")) {
             methods.add(parseMethod());
         }
+        if (tokens.has(0)) {
+            throw new ParseException("Unexpected token: ", tokens.index);
+        }
         return new Ast.Source(fields, methods);
     }
 
@@ -290,8 +293,10 @@ public final class Parser {
             require(")");
         } else if (peek(Token.Type.IDENTIFIER)) {
             result = parseFunction(Optional.empty());
-        } else {
+        } else if (tokens.has(0)) {
             throw new ParseException("Invalid Primary Expression", tokens.get(0).getIndex());
+        } else {
+            throw new ParseException("Missing token: ", tokens.get(-1).getIndex() + getPreviousTokenLiteral().length());
         }
         return result;
     }
