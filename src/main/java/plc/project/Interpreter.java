@@ -25,7 +25,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Field ast) {
-        throw new UnsupportedOperationException(); //TODO
+        scope.defineVariable(ast.getName(), visit(ast.getValue().get()));
+        return Environment.NIL;
     }
 
     @Override
