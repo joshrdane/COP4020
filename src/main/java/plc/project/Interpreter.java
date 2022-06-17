@@ -1,5 +1,8 @@
 package plc.project;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     private Scope scope = new Scope(null);
@@ -150,7 +153,13 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        List arguments = new ArrayList();
+        ast.getArguments().forEach((argument) -> arguments.add(visit(argument)));
+        if (ast.getReceiver().isPresent()) {
+            return visit(ast.getReceiver().get()).callMethod(ast.getName(), arguments);
+        } else {
+            return scope.lookupFunction(ast.getName(), ast.getArguments().size()).invoke(arguments);
+        }
     }
 
     /**
