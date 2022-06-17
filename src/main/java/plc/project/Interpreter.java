@@ -18,7 +18,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Source ast) {
-        throw new UnsupportedOperationException(); //TODO
+        ast.getFields().forEach(this::visit);
+        ast.getMethods().forEach(this::visit);
+        return scope.lookupFunction("main", 0).invoke(null);
     }
 
     @Override
