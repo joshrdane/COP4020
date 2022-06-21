@@ -183,22 +183,22 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 if (left.getValue() instanceof String || right.getValue() instanceof String) {
                     return Environment.create(left.getValue().toString() + right.getValue().toString());
                 }
-                if (left.getValue() instanceof BigInteger && right.getValue() instanceof BigInteger) {
+                try {
                     return Environment.create(requireType(BigInteger.class, left).add(requireType(BigInteger.class, right)));
-                }
-                if (left.getValue() instanceof BigDecimal && right.getValue() instanceof BigDecimal) {
+                } catch (RuntimeException ignored) {}
+                try {
                     return Environment.create(requireType(BigDecimal.class, left).add(requireType(BigDecimal.class, right)));
-                }
+                } catch (RuntimeException ignored) {}
                 throw new RuntimeException();
             case "-":
                 left = visit(ast.getLeft());
                 right = visit(ast.getRight());
-                if (left.getValue() instanceof BigInteger && right.getValue() instanceof BigInteger) {
+                try {
                     return Environment.create(requireType(BigInteger.class, left).subtract(requireType(BigInteger.class, right)));
-                }
-                if (left.getValue() instanceof BigDecimal && right.getValue() instanceof BigDecimal) {
+                } catch (RuntimeException ignored) {}
+                try {
                     return Environment.create(requireType(BigDecimal.class, left).subtract(requireType(BigDecimal.class, right)));
-                }
+                } catch (RuntimeException ignored) {}
                 throw new RuntimeException();
             case "*":
                 left = visit(ast.getLeft());
@@ -213,12 +213,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             case "/":
                 left = visit(ast.getLeft());
                 right = visit(ast.getRight());
-                if (left.getValue() instanceof BigInteger && right.getValue() instanceof BigInteger) {
+                try {
                     return Environment.create(requireType(BigInteger.class, left).divide(requireType(BigInteger.class, right)));
-                }
-                if (left.getValue() instanceof BigDecimal && right.getValue() instanceof BigDecimal) { // BigDecimal throws a rounding error in the case of a zero denom
+                } catch (RuntimeException ignored) {}
+                try {
                     return Environment.create(requireType(BigDecimal.class, left).divide(requireType(BigDecimal.class, right), RoundingMode.HALF_EVEN));
-                }
+                } catch (RuntimeException ignored) {}
                 throw new RuntimeException();
         }
         throw new RuntimeException();
