@@ -1,6 +1,8 @@
 package plc.project;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -134,21 +136,90 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Binary ast) {
+        Environment.PlcObject left;
+        Environment.PlcObject right;
         switch (ast.getOperator()) {
             case "AND":
                 return Environment.create(requireType(Boolean.class, visit(ast.getLeft())) && requireType(Boolean.class, visit(ast.getRight())));
             case "OR":
                 return Environment.create(requireType(Boolean.class, visit(ast.getLeft())) || requireType(Boolean.class, visit(ast.getRight())));
             case "<":
-                return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) < 0);
+                left = visit(ast.getLeft());
+                right = visit(ast.getRight());
+                if (left.getValue().getClass() == right.getValue().getClass()) {
+                    return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) < 0);
+                }
+                throw new RuntimeException();
             case "<=":
-                return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) <= 0);
+                left = visit(ast.getLeft());
+                right = visit(ast.getRight());
+                if (left.getValue().getClass() == right.getValue().getClass()) {
+                    return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) <= 0);
+                }
+                throw new RuntimeException();
             case ">":
-                return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) > 0);
+                left = visit(ast.getLeft());
+                right = visit(ast.getRight());
+                if (left.getValue().getClass() == right.getValue().getClass()) {
+                    return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) > 0);
+                }
+                throw new RuntimeException();
             case ">=":
-                return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) >= 0);
+                left = visit(ast.getLeft());
+                right = visit(ast.getRight());
+                if (left.getValue().getClass() == right.getValue().getClass()) {
+                    return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) >= 0);
+                }
+                throw new RuntimeException();
+            case "==":
+                return Environment.create(visit(ast.getLeft()).getValue().equals(visit(ast.getRight()).getValue()));
+            case "!=":
+                return Environment.create(!visit(ast.getLeft()).getValue().equals(visit(ast.getRight()).getValue()));
+            case "+":
+                left = visit(ast.getLeft());
+                right = visit(ast.getRight());
+                if (left.getValue() instanceof String || right.getValue() instanceof String) {
+                    return Environment.create(left.getValue().toString() + right.getValue().toString());
+                }
+                if (left.getValue() instanceof BigInteger && right.getValue() instanceof BigInteger) {
+                    return Environment.create(requireType(BigInteger.class, left).add(requireType(BigInteger.class, right)));
+                }
+                if (left.getValue() instanceof BigDecimal && right.getValue() instanceof BigDecimal) {
+                    return Environment.create(requireType(BigDecimal.class, left).add(requireType(BigDecimal.class, right)));
+                }
+                throw new RuntimeException();
+            case "-":
+                left = visit(ast.getLeft());
+                right = visit(ast.getRight());
+                if (left.getValue() instanceof BigInteger && right.getValue() instanceof BigInteger) {
+                    return Environment.create(requireType(BigInteger.class, left).subtract(requireType(BigInteger.class, right)));
+                }
+                if (left.getValue() instanceof BigDecimal && right.getValue() instanceof BigDecimal) {
+                    return Environment.create(requireType(BigDecimal.class, left).subtract(requireType(BigDecimal.class, right)));
+                }
+                throw new RuntimeException();
+            case "*":
+                left = visit(ast.getLeft());
+                right = visit(ast.getRight());
+                if (left.getValue() instanceof BigInteger && right.getValue() instanceof BigInteger) {
+                    return Environment.create(requireType(BigInteger.class, left).multiply(requireType(BigInteger.class, right)));
+                }
+                if (left.getValue() instanceof BigDecimal && right.getValue() instanceof BigDecimal) {
+                    return Environment.create(requireType(BigDecimal.class, left).multiply(requireType(BigDecimal.class, right)));
+                }
+                throw new RuntimeException();
+            case "/":
+                left = visit(ast.getLeft());
+                right = visit(ast.getRight());
+                if (left.getValue() instanceof BigInteger && right.getValue() instanceof BigInteger) {
+                    return Environment.create(requireType(BigInteger.class, left).divide(requireType(BigInteger.class, right)));
+                }
+                if (left.getValue() instanceof BigDecimal && right.getValue() instanceof BigDecimal) { // BigDecimal throws a rounding error in the case of a zero denom
+                    return Environment.create(requireType(BigDecimal.class, left).divide(requireType(BigDecimal.class, right), RoundingMode.HALF_EVEN));
+                }
+                throw new RuntimeException();
         }
-        throw new UnsupportedOperationException(); // TODO
+        throw new RuntimeException();
     }
 
     @Override
