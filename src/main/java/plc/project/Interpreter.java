@@ -96,10 +96,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.For ast) {
-        requireType(Iterable.class, visit(ast.getValue())).forEach((plcObject) -> {
+        requireType(Iterable.class, visit(ast.getValue())).forEach(driver -> {
             try {
                 scope = new Scope(scope);
-                scope.defineVariable(ast.getName(), Environment.NIL); // Initialize the variable as NIL ???
+                scope.defineVariable(ast.getName(), (Environment.PlcObject) driver);
                 ast.getStatements().forEach(this::visit);
             } finally {
                 scope = scope.getParent();
