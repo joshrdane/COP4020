@@ -1,6 +1,8 @@
 package plc.project;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
@@ -34,17 +36,20 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
-        Environment.PlcObject result = Environment.NIL;
-        try {
-            scope = new Scope(scope);
-            ast.getParameters().forEach((name) -> scope.defineVariable(name, Environment.NIL));
-            ast.getStatements().forEach(this::visit);
-        } catch (Return exception) {
-            result = exception.value;
-        } finally {
-            scope = scope.getParent();
-        }
-        return result;
+        scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
+            Environment.PlcObject result = Environment.NIL;
+            try {
+                scope = new Scope(scope);
+                ast.getParameters().forEach((name) -> scope.defineVariable(name, Environment.NIL));
+                ast.getStatements().forEach(this::visit);
+            } catch (Return exception) {
+                result = exception.value;
+            } finally {
+                scope = scope.getParent();
+            }
+            return result;
+        });
+        return Environment.NIL;
     }
 
     @Override
@@ -119,7 +124,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Literal ast) {
-        return new Environment.PlcObject(scope, ast.getLiteral() == null ? Environment.NIL.getValue() : ast.getLiteral());
+        return ast.getLiteral() == null ? Environment.NIL : Environment.create(ast.getLiteral());
     }
 
     @Override
@@ -158,6 +163,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         if (ast.getReceiver().isPresent()) {
             return visit(ast.getReceiver().get()).callMethod(ast.getName(), arguments);
         } else {
+            System.out.println("yeet");
             return scope.lookupFunction(ast.getName(), ast.getArguments().size()).invoke(arguments);
         }
     }
@@ -184,6 +190,15 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             this.value = value;
         }
 
+    }
+
+    public static void main(String[] args) {
+        Interpreter interpreter = new Interpreter(new Scope(null));
+        System.out.println(1337);
+        System.out.println(interpreter.visit(new Ast.Method("main", Arrays.asList(), Arrays.asList(
+                        new Ast.Stmt.Return(new Ast.Expr.Literal(BigInteger.ZERO)))
+        )));
+        System.out.println(1337);
     }
 
 }
