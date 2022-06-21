@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
@@ -42,7 +41,9 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             Environment.PlcObject result = Environment.NIL;
             try {
                 scope = new Scope(scope);
-                ast.getParameters().forEach((name) -> scope.defineVariable(name, Environment.NIL));
+                for (int i = 0; i < ast.getParameters().size(); i++) {
+                    scope.defineVariable(ast.getParameters().get(i), args.get(i));
+                }
                 ast.getStatements().forEach(this::visit);
             } catch (Return exception) {
                 result = exception.value;
@@ -56,7 +57,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Expression ast) {
-        throw new UnsupportedOperationException(); //TODO
+        visit(ast.getExpression());
+        return Environment.NIL;
     }
 
     @Override
@@ -201,12 +203,12 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             case "*":
                 left = visit(ast.getLeft());
                 right = visit(ast.getRight());
-                if (left.getValue() instanceof BigInteger && right.getValue() instanceof BigInteger) {
+                try {
                     return Environment.create(requireType(BigInteger.class, left).multiply(requireType(BigInteger.class, right)));
-                }
-                if (left.getValue() instanceof BigDecimal && right.getValue() instanceof BigDecimal) {
+                } catch (RuntimeException e) {}
+                try {
                     return Environment.create(requireType(BigDecimal.class, left).multiply(requireType(BigDecimal.class, right)));
-                }
+                } catch (RuntimeException e) {}
                 throw new RuntimeException();
             case "/":
                 left = visit(ast.getLeft());
@@ -261,15 +263,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
             this.value = value;
         }
 
-    }
-
-    public static void main(String[] args) {
-        Interpreter interpreter = new Interpreter(new Scope(null));
-        System.out.println(1337);
-        System.out.println(interpreter.visit(new Ast.Method("main", Arrays.asList(), Arrays.asList(
-                        new Ast.Stmt.Return(new Ast.Expr.Literal(BigInteger.ZERO)))
-        )));
-        System.out.println(1337);
     }
 
 }
