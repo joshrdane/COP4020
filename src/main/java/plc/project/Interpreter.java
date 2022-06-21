@@ -31,7 +31,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Field ast) {
-        scope.defineVariable(ast.getName(), visit(ast.getValue().get()));
+        scope.defineVariable(ast.getName(), ast.getValue().isPresent() ? visit(ast.getValue().get()) : Environment.NIL);
         return Environment.NIL;
     }
 
