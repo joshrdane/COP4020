@@ -69,8 +69,8 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Stmt.Assignment ast) {
-        Ast.Expr.Access access = requireType(Ast.Expr.Access.class, visit(ast.getReceiver()));
-        Environment.PlcObject value = visit(access.getReceiver().get());
+        Ast.Expr.Access access = (Ast.Expr.Access) ast.getReceiver();
+        Environment.PlcObject value = visit(ast.getValue());
         if (access.getReceiver().isPresent()) {
             visit(access.getReceiver().get()).setField(access.getName(), value);
         } else {
@@ -205,10 +205,10 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 right = visit(ast.getRight());
                 try {
                     return Environment.create(requireType(BigInteger.class, left).multiply(requireType(BigInteger.class, right)));
-                } catch (RuntimeException e) {}
+                } catch (RuntimeException ignored) {}
                 try {
                     return Environment.create(requireType(BigDecimal.class, left).multiply(requireType(BigDecimal.class, right)));
-                } catch (RuntimeException e) {}
+                } catch (RuntimeException ignored) {}
                 throw new RuntimeException();
             case "/":
                 left = visit(ast.getLeft());
@@ -236,7 +236,6 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
         if (ast.getReceiver().isPresent()) {
             return visit(ast.getReceiver().get()).callMethod(ast.getName(), arguments);
         } else {
-            System.out.println("yeet");
             return scope.lookupFunction(ast.getName(), ast.getArguments().size()).invoke(arguments);
         }
     }
