@@ -116,7 +116,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Literal ast) {
-        if (ast.getLiteral() == Environment.Type.NIL) {
+        if (ast.getLiteral() == Environment.NIL) {
             ast.setType(Environment.Type.NIL);
         } else if (ast.getLiteral() instanceof Boolean) {
             ast.setType(Environment.Type.BOOLEAN);
