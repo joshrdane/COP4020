@@ -1,5 +1,7 @@
 package plc.project;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -114,7 +116,29 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Literal ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (ast.getLiteral() == Environment.Type.NIL) {
+            ast.setType(Environment.Type.NIL);
+        } else if (ast.getLiteral() instanceof Boolean) {
+            ast.setType(Environment.Type.BOOLEAN);
+        } else if (ast.getLiteral() instanceof Character) {
+            ast.setType(Environment.Type.CHARACTER);
+        } else if (ast.getLiteral() instanceof String) {
+            ast.setType(Environment.Type.STRING);
+        } else if (ast.getLiteral() instanceof BigInteger) {
+            if (
+                    ((BigInteger) ast.getLiteral()).compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0 ||
+                    ((BigInteger) ast.getLiteral()).compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) < 0
+            ) {
+                throw new RuntimeException("Integer not in range");
+            }
+            ast.setType(Environment.Type.INTEGER);
+        } else if (ast.getLiteral() instanceof BigDecimal) {
+            if (!ast.getLiteral().equals(BigDecimal.valueOf(((BigDecimal) ast.getLiteral()).doubleValue()))) {
+                throw new RuntimeException("Double not in range");
+            }
+            ast.setType(Environment.Type.DECIMAL);
+        }
+        return null;
     }
 
     @Override
