@@ -132,7 +132,20 @@ public final class Analyzer implements Ast.Visitor<Void> {
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
-        throw new UnsupportedOperationException();  // TODO
+        if ((
+                target != type
+        ) && (
+                target != Environment.Type.ANY
+        ) && (
+                target != Environment.Type.COMPARABLE || (
+                        type != Environment.Type.INTEGER &&
+                        type != Environment.Type.DECIMAL &&
+                        type != Environment.Type.CHARACTER &&
+                        type != Environment.Type.STRING
+                )
+        )) {
+            throw new RuntimeException("Target type does not match the type being used or assigned.");
+        }
     }
 
 }
