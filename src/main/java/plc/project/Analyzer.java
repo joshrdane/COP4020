@@ -23,7 +23,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Source ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (scope.lookupFunction("main", 0).getReturnType() != Environment.Type.INTEGER) {
+            throw new RuntimeException("Main function must return an Integer.");
+        }
+        return null;
     }
 
     @Override
