@@ -86,7 +86,29 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.If ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getCondition());
+        if (ast.getCondition().getType() != Environment.Type.BOOLEAN) {
+            throw new RuntimeException("Condition must evaluate to a Boolean");
+        } else if (ast.getThenStatements().size() == 0) {
+            throw new RuntimeException("There must be at least one Then Statement");
+        }
+        for (Ast.Stmt stmt : ast.getThenStatements()) {
+            try {
+                scope = new Scope(scope);
+                visit(stmt);
+            } finally {
+                scope = scope.getParent();
+            }
+        }
+        for (Ast.Stmt stmt : ast.getElseStatements()) {
+            try {
+                scope = new Scope(scope);
+                visit(stmt);
+            } finally {
+                scope = scope.getParent();
+            }
+        }
+        return null;
     }
 
     @Override
