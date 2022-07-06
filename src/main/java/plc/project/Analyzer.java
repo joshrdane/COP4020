@@ -88,7 +88,17 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.While ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getCondition());
+        requireAssignable(Environment.Type.BOOLEAN, ast.getCondition().getType());
+        try {
+            scope = new Scope(scope);
+            for (Ast.Stmt stmt : ast.getStatements()) {
+                visit(stmt);
+            }
+        } finally {
+            scope = scope.getParent();
+        }
+        return null;
     }
 
     @Override
