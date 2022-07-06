@@ -148,7 +148,76 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Binary ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getLeft());
+        visit(ast.getRight());
+        if (
+                Arrays.stream(new String[] {"AND", "OR"})
+                        .anyMatch(operator -> operator.equals(ast.getOperator()))
+        ) {
+            if (
+                    Arrays.stream(new Ast.Expr[] {ast.getLeft(), ast.getRight()})
+                            .map(Ast.Expr::getType)
+                            .anyMatch(type -> type != Environment.Type.BOOLEAN)
+            ) {
+                throw new RuntimeException("Both operands must be of type Boolean");
+            }
+            ast.setType(Environment.Type.BOOLEAN);
+        } else if (
+                Arrays.stream(new String[] {"<", "<=", ">", ">=", "==", "!="})
+                        .anyMatch(operator -> operator.equals(ast.getOperator()))
+        ) {
+            if (
+                    Arrays.stream(new Ast.Expr[] {ast.getLeft(), ast.getRight()})
+                            .map(Ast.Expr::getType)
+                            .map(Environment.Type::getScope)
+                            .anyMatch(scopeType -> scopeType != Environment.Type.COMPARABLE.getScope())
+            ) {
+                throw new RuntimeException("Both operands must be Comparable");
+            } else if (
+                    Arrays.stream(new Ast.Expr[] {ast.getLeft(), ast.getRight()})
+                            .map(Ast.Expr::getType)
+                            .distinct()
+                            .count() != 1
+            ) {
+                throw new RuntimeException("Both operands must be of the same type");
+            }
+            ast.setType(Environment.Type.BOOLEAN);
+        } else if (ast.getOperator().equals("+")) {
+            if (
+                    Arrays.stream(new Ast.Expr[] {ast.getLeft(), ast.getRight()})
+                            .map(Ast.Expr::getType)
+                            .anyMatch(expr -> expr == Environment.Type.STRING)
+            ) {
+                ast.setType(Environment.Type.STRING);
+            } else {
+                checkMatchingComparable(ast);
+            }
+        } else if (
+                Arrays.stream(new String[] {"-", "*", "/"})
+                        .anyMatch(operator -> operator.equals(ast.getOperator()))
+        ) {
+            checkMatchingComparable(ast);
+        }
+        return null;
+    }
+
+    private static void checkMatchingComparable(Ast.Expr.Binary ast) {
+        if (
+                Arrays.stream(new Ast.Expr[] {ast.getLeft(), ast.getRight()})
+                        .map(Ast.Expr::getType)
+                        .anyMatch(type -> type != Environment.Type.INTEGER && type != Environment.Type.DECIMAL)
+        ) {
+            throw new RuntimeException("Both operands must be an Integer or Decimal");
+        } else if (
+                Arrays.stream(new Ast.Expr[] {ast.getLeft(), ast.getRight()})
+                        .map(Ast.Expr::getType)
+                        .distinct()
+                        .count() != 1
+        ) {
+            throw new RuntimeException("Both operands must be of the same type");
+        } else {
+            ast.setType(ast.getLeft().getType());
+        }
     }
 
     @Override
