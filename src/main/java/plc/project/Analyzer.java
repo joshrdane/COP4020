@@ -1,6 +1,7 @@
 package plc.project;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * See the specification for information about what the different visit
@@ -42,7 +43,32 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.Declaration ast) {
-        throw new UnsupportedOperationException();  // TODO
+        Optional<String> optTypeName = ast.getTypeName();
+        Optional<Ast.Expr> optValue = ast.getValue();
+
+        if (!optTypeName.isPresent() && !optValue.isPresent()) {
+            throw new RuntimeException("Declaration must have type or value to infer type");
+        }
+
+        Environment.Type type = null;
+
+        if (ast.getTypeName().isPresent()) {
+            type = Environment.getType(ast.getTypeName().get());
+        }
+
+        if (ast.getValue().isPresent()) {
+            visit(ast.getValue().get());
+
+            if (type == null) {
+                type = ast.getValue().get().getType();
+            }
+
+            requireAssignable(type, ast.getValue().get().getType());
+        }
+
+        ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), type, Environment.NIL));
+
+        return null;
     }
 
     @Override
