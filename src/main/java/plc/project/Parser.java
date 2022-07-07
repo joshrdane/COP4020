@@ -52,12 +52,11 @@ public final class Parser {
     public Ast.Field parseField() throws ParseException {
         require("LET");
         String name = require(Token.Type.IDENTIFIER);
-        Optional<Ast.Expr> value = Optional.empty();
-        if (match("=")) {
-            value = Optional.of(parseExpression());
-        }
+        require(":");
+        String typeName = require(Token.Type.IDENTIFIER);
+        Optional<Ast.Expr> value = match("=") ? Optional.of(parseExpression()) : Optional.empty();
         require(";");
-        return new Ast.Stmt.Field(name, value);
+        return new Ast.Stmt.Field(name, typeName, value);
     }
 
     /**
