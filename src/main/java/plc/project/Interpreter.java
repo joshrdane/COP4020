@@ -37,10 +37,11 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Method ast) {
+        Scope definition = scope;
         scope.defineFunction(ast.getName(), ast.getParameters().size(), args -> {
             Environment.PlcObject result = Environment.NIL;
             try {
-                scope = new Scope(scope);
+                scope = new Scope(definition);
                 for (int i = 0; i < ast.getParameters().size(); i++) {
                     scope.defineVariable(ast.getParameters().get(i), args.get(i));
                 }
@@ -226,7 +227,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Access ast) {
-        return ast.getReceiver().isPresent() ? visit(ast.getReceiver().get()).getField(ast.getName()).getValue() : scope.lookupVariable(ast.getName()).getValue();
+        return (ast.getReceiver().isPresent() ? visit(ast.getReceiver().get()).getField(ast.getName()) : scope.lookupVariable(ast.getName())).getValue();
     }
 
     @Override
