@@ -139,48 +139,38 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Binary ast) {
-        Environment.PlcObject left;
-        Environment.PlcObject right;
+        Environment.PlcObject left = visit(ast.getLeft());
+        if (ast.getOperator().equals("OR")) {
+            return Environment.create(requireType(Boolean.class, left) || requireType(Boolean.class, visit(ast.getRight())));
+        }
+        Environment.PlcObject right  = visit(ast.getRight());
         switch (ast.getOperator()) {
             case "AND":
-                return Environment.create(requireType(Boolean.class, visit(ast.getLeft())) && requireType(Boolean.class, visit(ast.getRight())));
-            case "OR":
-                return Environment.create(requireType(Boolean.class, visit(ast.getLeft())) || requireType(Boolean.class, visit(ast.getRight())));
+                return Environment.create(requireType(Boolean.class, left) && requireType(Boolean.class, right));
             case "<":
-                left = visit(ast.getLeft());
-                right = visit(ast.getRight());
                 if (left.getValue().getClass() == right.getValue().getClass()) {
-                    return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) < 0);
+                    return Environment.create(requireType(Comparable.class, left).compareTo(requireType(Comparable.class, right)) < 0);
                 }
-                throw new RuntimeException();
+                break;
             case "<=":
-                left = visit(ast.getLeft());
-                right = visit(ast.getRight());
                 if (left.getValue().getClass() == right.getValue().getClass()) {
-                    return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) <= 0);
+                    return Environment.create(requireType(Comparable.class, left).compareTo(requireType(Comparable.class, right)) <= 0);
                 }
-                throw new RuntimeException();
+                break;
             case ">":
-                left = visit(ast.getLeft());
-                right = visit(ast.getRight());
                 if (left.getValue().getClass() == right.getValue().getClass()) {
-                    return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) > 0);
+                    return Environment.create(requireType(Comparable.class, left).compareTo(requireType(Comparable.class, right)) > 0);
                 }
-                throw new RuntimeException();
             case ">=":
-                left = visit(ast.getLeft());
-                right = visit(ast.getRight());
                 if (left.getValue().getClass() == right.getValue().getClass()) {
-                    return Environment.create(requireType(Comparable.class, visit(ast.getLeft())).compareTo(requireType(Comparable.class, visit(ast.getRight()))) >= 0);
+                    return Environment.create(requireType(Comparable.class, left).compareTo(requireType(Comparable.class, right)) >= 0);
                 }
-                throw new RuntimeException();
+                break;
             case "==":
-                return Environment.create(visit(ast.getLeft()).getValue().equals(visit(ast.getRight()).getValue()));
+                return Environment.create(left.getValue().equals(right.getValue()));
             case "!=":
-                return Environment.create(!visit(ast.getLeft()).getValue().equals(visit(ast.getRight()).getValue()));
+                return Environment.create(!left.getValue().equals(right.getValue()));
             case "+":
-                left = visit(ast.getLeft());
-                right = visit(ast.getRight());
                 if (left.getValue() instanceof String || right.getValue() instanceof String) {
                     return Environment.create(left.getValue().toString() + right.getValue().toString());
                 }
@@ -190,37 +180,31 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
                 try {
                     return Environment.create(requireType(BigDecimal.class, left).add(requireType(BigDecimal.class, right)));
                 } catch (RuntimeException ignored) {}
-                throw new RuntimeException();
+                break;
             case "-":
-                left = visit(ast.getLeft());
-                right = visit(ast.getRight());
                 try {
                     return Environment.create(requireType(BigInteger.class, left).subtract(requireType(BigInteger.class, right)));
                 } catch (RuntimeException ignored) {}
                 try {
                     return Environment.create(requireType(BigDecimal.class, left).subtract(requireType(BigDecimal.class, right)));
                 } catch (RuntimeException ignored) {}
-                throw new RuntimeException();
+                break;
             case "*":
-                left = visit(ast.getLeft());
-                right = visit(ast.getRight());
                 try {
                     return Environment.create(requireType(BigInteger.class, left).multiply(requireType(BigInteger.class, right)));
                 } catch (RuntimeException ignored) {}
                 try {
                     return Environment.create(requireType(BigDecimal.class, left).multiply(requireType(BigDecimal.class, right)));
                 } catch (RuntimeException ignored) {}
-                throw new RuntimeException();
+                break;
             case "/":
-                left = visit(ast.getLeft());
-                right = visit(ast.getRight());
                 try {
                     return Environment.create(requireType(BigInteger.class, left).divide(requireType(BigInteger.class, right)));
                 } catch (RuntimeException ignored) {}
                 try {
                     return Environment.create(requireType(BigDecimal.class, left).divide(requireType(BigDecimal.class, right), RoundingMode.HALF_EVEN));
                 } catch (RuntimeException ignored) {}
-                throw new RuntimeException();
+                break;
         }
         throw new RuntimeException();
     }
