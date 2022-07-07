@@ -231,7 +231,7 @@ public class Interpreter implements Ast.Visitor<Environment.PlcObject> {
 
     @Override
     public Environment.PlcObject visit(Ast.Expr.Function ast) {
-        List arguments = new ArrayList();
+        List<Environment.PlcObject> arguments = new ArrayList<>();
         ast.getArguments().forEach((argument) -> arguments.add(visit(argument)));
         if (ast.getReceiver().isPresent()) {
             return visit(ast.getReceiver().get()).callMethod(ast.getName(), arguments);
