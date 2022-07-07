@@ -67,19 +67,23 @@ public final class Parser {
         require("DEF");
         String name = require(Token.Type.IDENTIFIER);
         List<String> parameters = new ArrayList<>();
+        List<String> parameterTypeNames = new ArrayList<>();
         List<Ast.Stmt> statements = new ArrayList<>();
         require("(");
         if (peek(Token.Type.IDENTIFIER)) {
             do {
                 parameters.add(getPreviousTokenLiteral());
+                require(":");
+                parameterTypeNames.add(getPreviousTokenLiteral());
             } while (match(","));
         }
         require(")");
+        Optional<String> returnTypeName = match(":") ? Optional.of(require(Token.Type.IDENTIFIER)) : Optional.empty();
         require("DO");
         while (!match("END")) {
             statements.add(parseStatement());
         }
-        return new Ast.Method(name, parameters, statements);
+        return new Ast.Method(name, parameters, parameterTypeNames, returnTypeName, statements);
     }
 
     /**
