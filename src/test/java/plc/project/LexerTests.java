@@ -185,7 +185,10 @@ public class LexerTests {
         Assertions.assertEquals(13, exception.getIndex());
         exception = Assertions.assertThrows(ParseException.class,
                 () -> new Lexer("\"invalid \\escape\"").lex());
-        Assertions.assertEquals(11, exception.getIndex());
+        Assertions.assertEquals(9, exception.getIndex());
+        exception = Assertions.assertThrows(ParseException.class,
+                () -> new Lexer("\"a\\u0000b\\u12ABc\"").lex());
+        Assertions.assertEquals(2, exception.getIndex());
     }
 
     /**
