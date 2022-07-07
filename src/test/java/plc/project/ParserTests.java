@@ -441,6 +441,18 @@ final class ParserTests {
                         ),
                         new Ast.Expr.Function(Optional.empty(), "name", Arrays.asList())
                 ),
+                Arguments.of("One Argument",
+                        Arrays.asList(
+                                //name()
+                                new Token(Token.Type.IDENTIFIER, "name", 0),
+                                new Token(Token.Type.OPERATOR, "(", 4),
+                                new Token(Token.Type.IDENTIFIER, "x", 5),
+                                new Token(Token.Type.OPERATOR, ")", 6)
+                        ),
+                        new Ast.Expr.Function(Optional.empty(), "name", Arrays.asList(
+                                new Ast.Expr.Access(Optional.empty(), "x")
+                        ))
+                ),
                 Arguments.of("Multiple Arguments",
                         Arrays.asList(
                                 //name(expr1, expr2, expr3)
