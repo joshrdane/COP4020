@@ -119,12 +119,10 @@ public final class Parser {
     public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException {
         require("LET");
         String name = require(Token.Type.IDENTIFIER);
-        Optional<Ast.Expr> value = Optional.empty();
-        if (match("=")) {
-            value = Optional.of(parseExpression());
-        }
+        Optional<String> typeName = match(":") ? Optional.of(require(Token.Type.IDENTIFIER)) : Optional.empty();
+        Optional<Ast.Expr> value = match("=") ? Optional.of(parseExpression()) : Optional.empty();
         require(";");
-        return new Ast.Stmt.Declaration(name, value);
+        return new Ast.Stmt.Declaration(name, typeName, value);
     }
 
     /**
