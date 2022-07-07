@@ -52,12 +52,11 @@ public final class Parser {
     public Ast.Field parseField() throws ParseException {
         require("LET");
         String name = require(Token.Type.IDENTIFIER);
-        Optional<Ast.Expr> value = Optional.empty();
-        if (match("=")) {
-            value = Optional.of(parseExpression());
-        }
+        require(":");
+        String typeName = require(Token.Type.IDENTIFIER);
+        Optional<Ast.Expr> value = match("=") ? Optional.of(parseExpression()) : Optional.empty();
         require(";");
-        return new Ast.Stmt.Field(name, value);
+        return new Ast.Stmt.Field(name, typeName, value);
     }
 
     /**
@@ -68,19 +67,23 @@ public final class Parser {
         require("DEF");
         String name = require(Token.Type.IDENTIFIER);
         List<String> parameters = new ArrayList<>();
+        List<String> parameterTypeNames = new ArrayList<>();
         List<Ast.Stmt> statements = new ArrayList<>();
         require("(");
         if (peek(Token.Type.IDENTIFIER)) {
             do {
                 parameters.add(getPreviousTokenLiteral());
+                require(":");
+                parameterTypeNames.add(getPreviousTokenLiteral());
             } while (match(","));
         }
         require(")");
+        Optional<String> returnTypeName = match(":") ? Optional.of(require(Token.Type.IDENTIFIER)) : Optional.empty();
         require("DO");
         while (!match("END")) {
             statements.add(parseStatement());
         }
-        return new Ast.Method(name, parameters, statements);
+        return new Ast.Method(name, parameters, parameterTypeNames, returnTypeName, statements);
     }
 
     /**
@@ -120,12 +123,10 @@ public final class Parser {
     public Ast.Stmt.Declaration parseDeclarationStatement() throws ParseException {
         require("LET");
         String name = require(Token.Type.IDENTIFIER);
-        Optional<Ast.Expr> value = Optional.empty();
-        if (match("=")) {
-            value = Optional.of(parseExpression());
-        }
+        Optional<String> typeName = match(":") ? Optional.of(require(Token.Type.IDENTIFIER)) : Optional.empty();
+        Optional<Ast.Expr> value = match("=") ? Optional.of(parseExpression()) : Optional.empty();
         require(";");
-        return new Ast.Stmt.Declaration(name, value);
+        return new Ast.Stmt.Declaration(name, typeName, value);
     }
 
     /**

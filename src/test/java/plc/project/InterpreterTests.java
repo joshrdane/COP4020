@@ -78,7 +78,7 @@ final class InterpreterTests {
                         BigInteger.ZERO
                 ),
                 Arguments.of("Arguments",
-                        new Ast.Method("main", Arrays.asList("x"), Arrays.asList(
+                        new Ast.Method("square", Arrays.asList("x"), Arrays.asList(
                                 new Ast.Stmt.Return(new Ast.Expr.Binary("*",
                                         new Ast.Expr.Access(Optional.empty(), "x"),
                                         new Ast.Expr.Access(Optional.empty(), "x")
