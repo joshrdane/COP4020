@@ -253,7 +253,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Function ast) {
-        throw new UnsupportedOperationException();  // TODO
+        // TODO complete this
+        ast.getReceiver().ifPresent(this::visit);
+        ast.setFunction(scope.lookupFunction(ast.getName(), ast.getArguments().size()));
+        return null;
     }
 
     public static void requireAssignable(Environment.Type target, Environment.Type type) {
