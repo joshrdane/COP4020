@@ -248,7 +248,12 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Access ast) {
-        throw new UnsupportedOperationException();  // TODO
+        // TODO fix this
+        if (ast.getReceiver().isPresent()) {
+            visit(ast.getReceiver().get());
+        }
+        ast.setVariable(scope.lookupVariable(ast.getName()));
+        return null;
     }
 
     @Override
