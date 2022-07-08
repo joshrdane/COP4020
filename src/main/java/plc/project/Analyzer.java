@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * See the specification for information about what the different visit
@@ -41,7 +42,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        throw new UnsupportedOperationException();  // TODO
+        ast.setFunction(scope.defineFunction(ast.getName(), ast.getName(), ast.getParameters().stream().map(Environment::getType).collect(Collectors.toList()), ast.getReturnTypeName().isPresent() ? Environment.getType(ast.getReturnTypeName().get()) : Environment.Type.NIL, args -> Environment.NIL));
+        try {
+            scope = new Scope(scope);
+            ast.getStatements().forEach(this::visit);
+        } finally {
+            scope = scope.getParent();
+        }
+        return null;
     }
 
     @Override
@@ -85,7 +93,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.Assignment ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (ast.getReceiver() instanceof Ast.Expr.Access) {
+            visit(ast.getReceiver());
+            visit(ast.getValue());
+            requireAssignable(ast.getValue().getType(), ast.getReceiver().getType());
+        } else {
+            throw new RuntimeException("Receiver must be an access expression");
+        }
+        return null;
     }
 
     @Override
@@ -163,6 +178,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
                 throw new RuntimeException("Double not in range");
             }
             ast.setType(Environment.Type.DECIMAL);
+        } else {
+            throw new RuntimeException("You should not reach this point");
         }
         return null;
     }
@@ -251,8 +268,10 @@ public final class Analyzer implements Ast.Visitor<Void> {
         // TODO fix this
         if (ast.getReceiver().isPresent()) {
             visit(ast.getReceiver().get());
+            ast.getReceiver().get().getType().getField(ast.getName());
+        } else {
+            ast.setVariable(scope.lookupVariable(ast.getName()));
         }
-        ast.setVariable(scope.lookupVariable(ast.getName()));
         return null;
     }
 
@@ -260,7 +279,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
     public Void visit(Ast.Expr.Function ast) {
         // TODO complete this
         ast.getReceiver().ifPresent(this::visit);
-        ast.setFunction(scope.lookupFunction(ast.getName(), ast.getArguments().size()));
+        ast.getArguments().forEach(this::visit);
+        ast.setFunction(scope.lookupFunction(ast.getName(), ast.getArguments().size()  /*+ (ast.getReceiver().isPresent() ? 1 : 0)*/));
         return null;
     }
 
