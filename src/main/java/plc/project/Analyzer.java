@@ -132,7 +132,14 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.For ast) {
-        throw new UnsupportedOperationException();  // TODO
+        try {
+            scope = new Scope(scope);
+            scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, Environment.NIL);
+            ast.getStatements().forEach(this::visit);
+        } finally {
+            scope = scope.getParent();
+        }
+        return null;
     }
 
     @Override
