@@ -42,6 +42,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
+        method = ast;
         ast.setFunction(scope.defineFunction(ast.getName(), ast.getName(), ast.getParameters().stream().map(Environment::getType).collect(Collectors.toList()), ast.getReturnTypeName().isPresent() ? Environment.getType(ast.getReturnTypeName().get()) : Environment.Type.NIL, args -> Environment.NIL));
         try {
             scope = new Scope(scope);
@@ -159,7 +160,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.Return ast) {
-        throw new UnsupportedOperationException();  // TODO
+        visit(ast.getValue());
+        requireAssignable(ast.getValue().getType(), Environment.getType(method.getReturnTypeName().get()));
+        return null;
     }
 
     @Override
@@ -193,7 +196,13 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Group ast) {
-        throw new UnsupportedOperationException();  // TODO
+        if (ast.getExpression() instanceof Ast.Expr.Binary) {
+            visit(ast.getExpression());
+            ast.setType(ast.getExpression().getType());
+        } else {
+            throw new RuntimeException("Must be a Binary expression");
+        }
+        return null;
     }
 
     @Override
@@ -272,10 +281,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Access ast) {
-        // TODO fix this
         if (ast.getReceiver().isPresent()) {
             visit(ast.getReceiver().get());
-            ast.getReceiver().get().getType().getField(ast.getName());
+            ast.setVariable(ast.getReceiver().get().getType().getField(ast.getName()));
         } else {
             ast.setVariable(scope.lookupVariable(ast.getName()));
         }
@@ -284,10 +292,19 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Expr.Function ast) {
-        // TODO complete this
-        ast.getReceiver().ifPresent(this::visit);
-        ast.getArguments().forEach(this::visit);
-        ast.setFunction(scope.lookupFunction(ast.getName(), ast.getArguments().size()  /*+ (ast.getReceiver().isPresent() ? 1 : 0)*/));
+        int offset = 0;
+        if (ast.getReceiver().isPresent()) {
+            visit(ast.getReceiver().get());
+            ast.getArguments().forEach(this::visit);
+            ast.setFunction(ast.getReceiver().get().getType().getMethod(ast.getName(), ast.getArguments().size()));
+            offset++;
+        } else {
+            ast.setFunction(scope.lookupFunction(ast.getName(), ast.getArguments().size()  /*+ (ast.getReceiver().isPresent() ? 1 : 0)*/));
+        }
+        for (int i = 0; i < ast.getArguments().size(); i++) {
+            visit(ast.getArguments().get(i));
+            requireAssignable(ast.getFunction().getParameterTypes().get(i + offset), ast.getArguments().get(i).getType());
+        }
         return null;
     }
 
