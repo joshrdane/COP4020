@@ -34,9 +34,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Field ast) {
-        requireAssignable(Environment.getType(ast.getTypeName()), ast.getValue().orElseThrow(RuntimeException::new).getType());
         visit(ast.getValue().get());
         ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), ast.getValue().get().getType(), Environment.NIL));
+        requireAssignable(ast.getValue().orElseThrow(RuntimeException::new).getType(), Environment.getType(ast.getTypeName()));
         return null;
     }
 
