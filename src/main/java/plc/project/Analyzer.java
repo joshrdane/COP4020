@@ -133,6 +133,9 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.For ast) {
+        if (ast.getStatements().size() == 0) {
+            throw new RuntimeException("For loops require at least one statement");
+        }
         try {
             scope = new Scope(scope);
             scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, Environment.NIL);
@@ -140,6 +143,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         } finally {
             scope = scope.getParent();
         }
+        requireAssignable(ast.getValue().getType(), Environment.Type.INTEGER_ITERABLE);
         return null;
     }
 
