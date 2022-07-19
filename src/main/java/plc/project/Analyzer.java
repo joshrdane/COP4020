@@ -34,8 +34,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Field ast) {
-        visit(ast.getValue().get());
-        ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), ast.getValue().get().getType(), Environment.NIL));
+        ast.getValue().ifPresent(this::visit);
+        ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), Environment.getType(ast.getTypeName()), Environment.NIL));
         requireAssignable(ast.getValue().orElseThrow(RuntimeException::new).getType(), Environment.getType(ast.getTypeName()));
         return null;
     }
@@ -165,7 +165,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     @Override
     public Void visit(Ast.Stmt.Return ast) {
         visit(ast.getValue());
-        requireAssignable(ast.getValue().getType(), Environment.getType(method.getReturnTypeName().get()));
+        method.getReturnTypeName().ifPresent(returnTypeName -> requireAssignable(ast.getValue().getType(), Environment.getType(returnTypeName)));
         return null;
     }
 
