@@ -74,7 +74,7 @@ public final class Parser {
             do {
                 parameters.add(getPreviousTokenLiteral());
                 require(":");
-                parameterTypeNames.add(getPreviousTokenLiteral());
+                parameterTypeNames.add(require(Token.Type.IDENTIFIER));
             } while (match(","));
         }
         require(")");
