@@ -30,13 +30,18 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Source ast) {
-        print("class Main {");
-        newline(++indent);
+        print("public class Main {");
+        newline(indent++);
         ast.getFields().forEach(field -> {
-            visit(field);
             newline(indent);
+            visit(field);
         });
-        print("public static void main(String[] args) {", "    System.exit(new Main().main());", "}");
+        newline(indent);
+        print("public static void main(String[] args) {");
+        newline(indent);
+        print("    System.exit(new Main().main());");
+        newline(indent);
+        print("}\n");
         ast.getMethods().forEach(method -> {
             newline(indent);
             visit(method);
@@ -56,32 +61,27 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        print(ast.getReturnTypeName(), " ", ast.getName(), "(");
-        if (!ast.getParameters().isEmpty()) {
-            for (int i = 0; i < ast.getParameters().size(); i++) {
-                if (i > 0) {
-                    print(", ");
-                }
-                print(ast.getParameterTypeNames().get(i), " ", ast.getParameters().get(i));
+        print(Environment.getType(ast.getReturnTypeName().get()).getJvmName(), " ", ast.getName(), "(");
+        for (int i = 0; i < ast.getParameters().size(); i++) {
+            if (i > 0) {
+                print(", ");
             }
+            print(ast.getParameterTypeNames().get(i), " ", ast.getParameters().get(i));
         }
         print(") {");
-        if (!ast.getStatements().isEmpty()) {
-            indent++;
-            ast.getStatements().forEach(statement -> {
-                newline(indent);
-                visit(statement);
-            });
-            indent--;
-        }
-        print(indent);
-        print("}");
+        indent++;
+        ast.getStatements().forEach(statement -> {
+            newline(indent);
+            visit(statement);
+        });
+        newline(--indent);
+        print("}\n");
         return null;
     }
 
     @Override
     public Void visit(Ast.Stmt.Expression ast) {
-        print(visit(ast.getExpression()), ";");
+        print(ast.getExpression(), ";");
         return null;
     }
 
@@ -101,33 +101,37 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Stmt.If ast) {
-        print("if (", visit(ast.getCondition()), ") {");
-        if (!ast.getThenStatements().isEmpty()) {
-            indent++;
-            ast.getThenStatements().forEach(statement -> {
-                newline(indent);
-                visit(statement);
-            });
-            indent--;
-        }
-        newline(indent);
+        print("if (", ast.getCondition(), ") {");
+        indent++;
+        ast.getThenStatements().forEach(statement -> {
+            newline(indent);
+            visit(statement);
+        });
+        newline(--indent);
         if (!ast.getElseStatements().isEmpty()) {
             print("} else {");
             indent++;
-            ast.getThenStatements().forEach(statement -> {
+            ast.getElseStatements().forEach(statement -> {
                 newline(indent);
                 visit(statement);
             });
             indent--;
             newline(indent);
         }
-        print(";");
+        print("}");
         return null;
     }
 
     @Override
     public Void visit(Ast.Stmt.For ast) {
-        throw new UnsupportedOperationException(); //TODO
+        print("for (int : ", ast.getName(), ") {");
+        indent++;
+        ast.getStatements().forEach(statement -> {
+            newline(indent);
+            visit(statement);
+        });
+        newline(--indent);
+        print("}");
         return null;
     }
 
@@ -142,43 +146,70 @@ public final class Generator implements Ast.Visitor<Void> {
             }
             newline(--indent);
         }
-        print(";");
+        print("}");
         return null;
     }
 
     @Override
     public Void visit(Ast.Stmt.Return ast) {
-        throw new UnsupportedOperationException(); //TODO
+        print("return ", ast.getValue(), ";");
         return null;
     }
 
     @Override
     public Void visit(Ast.Expr.Literal ast) {
-        throw new UnsupportedOperationException(); //TODO
+        String result = ast.getLiteral().toString();
+        if (ast.getLiteral() instanceof Character) {
+            result = String.format("'%s'", result);
+        } else if (ast.getLiteral() instanceof String) {
+            result = String.format("\"%s\"", result);
+        }
+        print(result);
         return null;
     }
 
     @Override
     public Void visit(Ast.Expr.Group ast) {
-        throw new UnsupportedOperationException(); //TODO
+        print("(", visit(ast.getExpression()), ")");
         return null;
     }
 
     @Override
     public Void visit(Ast.Expr.Binary ast) {
-        throw new UnsupportedOperationException(); //TODO
+        String operator;
+        switch (ast.getOperator()) {
+            default:
+                operator = ast.getOperator();
+                break;
+            case "AND":
+                operator = "&&";
+                break;
+            case "OR":
+                operator = "||";
+                break;
+        }
+        print(ast.getLeft(), " ", operator, " ", ast.getRight());
         return null;
     }
 
     @Override
     public Void visit(Ast.Expr.Access ast) {
-        throw new UnsupportedOperationException(); //TODO
+        ast.getReceiver().ifPresent(receiver -> print(receiver, "."));
+        print(ast.getVariable().getJvmName());
         return null;
     }
 
     @Override
     public Void visit(Ast.Expr.Function ast) {
-        throw new UnsupportedOperationException(); //TODO
+        ast.getReceiver().ifPresent(receiver -> print(receiver, "."));
+        print(ast.getFunction().getJvmName(), "(");
+        for (int i = 0; i < ast.getArguments().size(); i++) {
+            if (i > 0) {
+                print(", ");
+            }
+            print(ast.getArguments().get(i));
+        }
+        print(")");
         return null;
     }
 
