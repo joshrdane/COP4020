@@ -41,7 +41,8 @@ public final class Generator implements Ast.Visitor<Void> {
         newline(indent);
         print("    System.exit(new Main().main());");
         newline(indent);
-        print("}\n");
+        print("}");
+        newline(0);
         ast.getMethods().forEach(method -> {
             newline(indent);
             visit(method);
@@ -61,7 +62,7 @@ public final class Generator implements Ast.Visitor<Void> {
 
     @Override
     public Void visit(Ast.Method ast) {
-        print(Environment.getType(ast.getReturnTypeName().get()).getJvmName(), " ", ast.getName(), "(");
+        print(Environment.getType(ast.getReturnTypeName().orElseThrow(RuntimeException::new)).getJvmName(), " ", ast.getName(), "(");
         for (int i = 0; i < ast.getParameters().size(); i++) {
             if (i > 0) {
                 print(", ");
@@ -75,7 +76,8 @@ public final class Generator implements Ast.Visitor<Void> {
             visit(statement);
         });
         newline(--indent);
-        print("}\n");
+        print("}");
+        newline(0);
         return null;
     }
 
