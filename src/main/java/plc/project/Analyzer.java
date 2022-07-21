@@ -36,7 +36,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
     public Void visit(Ast.Field ast) {
         ast.getValue().ifPresent(this::visit);
         ast.setVariable(scope.defineVariable(ast.getName(), ast.getName(), Environment.getType(ast.getTypeName()), Environment.NIL));
-        requireAssignable(ast.getValue().orElseThrow(RuntimeException::new).getType(), Environment.getType(ast.getTypeName()));
+        ast.getValue().ifPresent(value -> requireAssignable(value.getType(), Environment.getType(ast.getTypeName())));
         return null;
     }
 
@@ -136,6 +136,8 @@ public final class Analyzer implements Ast.Visitor<Void> {
         if (ast.getStatements().size() == 0) {
             throw new RuntimeException("For loops require at least one statement");
         }
+        visit(ast.getValue());
+        requireAssignable(ast.getValue().getType(), Environment.Type.INTEGER_ITERABLE);
         try {
             scope = new Scope(scope);
             scope.defineVariable(ast.getName(), ast.getName(), Environment.Type.INTEGER, Environment.NIL);
@@ -143,7 +145,6 @@ public final class Analyzer implements Ast.Visitor<Void> {
         } finally {
             scope = scope.getParent();
         }
-        requireAssignable(ast.getValue().getType(), Environment.Type.INTEGER_ITERABLE);
         return null;
     }
 
@@ -153,9 +154,7 @@ public final class Analyzer implements Ast.Visitor<Void> {
         requireAssignable(Environment.Type.BOOLEAN, ast.getCondition().getType());
         try {
             scope = new Scope(scope);
-            for (Ast.Stmt stmt : ast.getStatements()) {
-                visit(stmt);
-            }
+            ast.getStatements().forEach(this::visit);
         } finally {
             scope = scope.getParent();
         }
